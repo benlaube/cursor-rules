@@ -9,15 +9,35 @@ This repository contains Cursor IDE rules and commands used across projects.
 
 ## Usage
 
-This repository is typically included as a git submodule in projects:
+This repository is included as a git submodule in projects. **Important:** The submodule should be added to `cursor-rules/` (not `.cursor/`) to preserve project-specific `.cursor/` content.
+
+### Quick Start
 
 ```bash
-git submodule add <repository-url> .cursor
+# Add submodule to cursor-rules/ directory
+git submodule add https://github.com/benlaube/cursor-rules.git cursor-rules
+
+# Run setup script to create symlinks
+./scripts/setup-cursor-rules.sh
 ```
+
+This creates:
+- `cursor-rules/` - The submodule (contains rules/ and commands/)
+- `.cursor/rules` - Symlink to `cursor-rules/rules`
+- `.cursor/commands` - Symlink to `cursor-rules/commands`
+
+### Why cursor-rules/ instead of .cursor/?
+
+Projects may have additional content in `.cursor/` beyond rules and commands:
+- Project-specific configurations
+- Custom rules
+- Other directories
+
+Placing the submodule directly in `.cursor/` would overwrite this content. Using `cursor-rules/` with symlinks preserves project-specific content while providing shared rules and commands.
 
 ## Integration
 
-See the main repository's `STANDARDS_INTEGRATION_GUIDE.md` for integration instructions.
+See the main repository's `STANDARDS_INTEGRATION_GUIDE.md` for complete integration instructions, or run the setup script after adding the submodule.
 
 ## Versioning
 
