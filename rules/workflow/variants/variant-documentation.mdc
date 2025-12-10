@@ -1,0 +1,185 @@
+---
+description: Documentation-Only workflow variant for tasks involving no code changes. Optimized for README updates, standards documentation, guides, and other documentation work.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 09:37:22 EST
+alwaysApply: false
+globs:
+type: Workflow Variant Rule - Documentation-only handling
+applicability: When task involves only documentation changes with no code modifications
+dependencies: []
+relatedCommands: []
+relatedRules: [[../task-workflow.mdc](../task-workflow.mdc), [../workflow-variants.mdc](../workflow-variants.mdc), [../../documentation/documentation-metadata.mdc](../../documentation/documentation-metadata.mdc), [../../documentation/documentation-dependency-tracking.mdc](../../documentation/documentation-dependency-tracking.mdc)]
+relatedStandards: [[project-planning/documentation-management.md](../../../standards/project-planning/documentation-management.md)]
+---
+
+# Documentation-Only Workflow Variant
+
+This variant optimizes the workflow for documentation tasks that involve no code changes.
+
+> **Parent Rule:** See `workflow-variants.mdc` for variant selection and `task-workflow.mdc` for the complete workflow.
+
+---
+
+## When to Use
+
+- README updates
+- Standards documentation changes
+- Guide creation or updates
+- Comment improvements
+- CHANGELOG updates
+- No code logic changes
+
+## Trigger Keywords
+
+User request involves: "update docs", "fix README", "add documentation", "update guide", "typo fix", "documentation"
+
+---
+
+## Step-by-Step Modifications
+
+### Step 0: Documentation Scope
+
+**Do:**
+- Identify all affected documentation files
+- Check documentation standards (`standards/project-planning/documentation-management.md`)
+- Verify file structure and naming conventions
+- Identify cross-references that need updating
+
+**Skip:**
+- Code-related clarifications
+- Test planning
+- Performance considerations
+
+### Step 1: Documentation Pre-Flight
+
+**Do:**
+- Git status check
+- Verify documentation file paths exist
+- Check for template compliance
+- Review related documentation for consistency
+
+**Skip:**
+- Build verification
+- Test suite validation
+- Dependency checks
+- Application launch verification
+
+### Step 2: Documentation Development
+
+**Do:**
+- Follow documentation standards
+- Maintain consistent formatting
+- Update cross-references and links
+- Check markdown rendering
+- Update version metadata in files
+- Update CHANGELOG.md if significant
+
+**Skip:**
+- Code changes
+- Test updates
+- Build configuration changes
+
+**Quality Checks:**
+- Links work (internal and external)
+- Code examples are accurate
+- Formatting is consistent
+- Metadata is updated (version, lastUpdated)
+
+### Step 3: Documentation Validation
+
+**Do:**
+- Verify markdown renders correctly
+- Check all links work
+- Review for spelling/grammar
+- Verify cross-references are updated
+- Ensure version metadata incremented
+
+**Skip:**
+- Build tests
+- Unit tests
+- Integration tests
+- Security scans (unless documenting security)
+
+---
+
+## Documentation Workflow Checklist
+
+```markdown
+- [ ] Documentation scope identified
+- [ ] Documentation standards reviewed
+- [ ] Content written/updated
+- [ ] Links verified
+- [ ] Cross-references updated
+- [ ] Version metadata updated
+- [ ] Markdown renders correctly
+- [ ] CHANGELOG.md updated (if significant)
+- [ ] Committed with `docs(scope): description`
+```
+
+---
+
+## Documentation Standards Reference
+
+When working on documentation, follow these standards:
+
+| Standard | Location | Purpose |
+|----------|----------|---------|
+| Documentation Management | `standards/project-planning/documentation-management.md` | Overall documentation rules |
+| Documentation Metadata | `.cursor/rules/documentation/documentation-metadata.mdc` | Metadata requirements |
+| Documentation Versioning | `.cursor/rules/documentation/documentation-versioning.mdc` | Status and versioning |
+| Dependency Tracking | `.cursor/rules/documentation/documentation-dependency-tracking.mdc` | Cross-reference requirements |
+
+---
+
+## Comparison with Standard Workflow
+
+| Phase | Standard | Documentation |
+|-------|----------|---------------|
+| **Step 0** | Full clarification | Doc scope only |
+| **Step 1** | Full validation | Git + file paths only |
+| **Step 2** | Full development | Standards compliance |
+| **Step 3** | Full validation | Links + formatting |
+| **Commit** | Various | Always `docs(scope):` |
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [workflow-variants.mdc](../workflow-variants.mdc) - Variant router/index
+  - [task-workflow.mdc](../task-workflow.mdc) - Parent workflow rule
+  - [documentation-metadata.mdc](../../documentation/documentation-metadata.mdc) - Documentation metadata
+  - [documentation-dependency-tracking.mdc](../../documentation/documentation-dependency-tracking.mdc) - Cross-reference tracking
+- **Standards:**
+  - [documentation-management.md](../../../standards/project-planning/documentation-management.md) - Documentation standards
+
+---
+
+## How to Use This Rule
+
+**This rule activates when a task involves only documentation changes.**
+
+**Agents should:**
+1. Recognize documentation trigger keywords
+2. Identify all affected documentation files
+3. Skip code-related validation steps
+4. Focus on documentation standards compliance
+5. Verify links and cross-references
+6. Update version metadata
+7. Commit with `docs(scope): description` format
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

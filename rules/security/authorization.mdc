@@ -1,0 +1,210 @@
+---
+description: Authorization implementation standards for role-based and attribute-based access control. This rule covers RBAC/ABAC patterns, permission checking, resource ownership validation, and authorization middleware. Agents must implement centralized authorization logic, validate permissions server-side, use principle of least privilege, and audit authorization decisions for sensitive operations.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/auth/**,**/permissions/**,**/middleware/**,**/policies/**
+type: Security Rule - Authorization standards
+applicability: Authorization implementation and review
+dependencies: []
+relatedCommands: [[audit-security.md]]
+relatedRules: [[authentication.mdc], [../database/rls-policy-review.mdc], [../supabase/supabase-rls.mdc]]
+relatedStandards: [[security/access-control.md]]
+---
+
+# Authorization Standards Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Implementing access control
+- Creating permission systems
+- Writing authorization middleware
+- Reviewing resource access logic
+
+---
+
+## Core Principles
+
+1. **Deny by default** - Require explicit permission grants
+2. **Least privilege** - Grant minimum necessary permissions
+3. **Centralize logic** - Single source of truth for authorization
+4. **Validate server-side** - Never trust client-side checks alone
+
+---
+
+## Authorization Patterns
+
+### 1. Role-Based Access Control (RBAC)
+
+**Use when:** Permissions are tied to user roles
+
+```typescript
+// Define roles and permissions
+const ROLES = {
+  admin: ['read', 'write', 'delete', 'manage_users'],
+  editor: ['read', 'write'],
+  viewer: ['read'],
+} as const;
+
+// Check permission
+function hasPermission(user: User, permission: string): boolean {
+  const userPermissions = ROLES[user.role] || [];
+  return userPermissions.includes(permission);
+}
+
+// Middleware example
+function requirePermission(permission: string) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!hasPermission(req.user, permission)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    next();
+  };
+}
+```
+
+### 2. Attribute-Based Access Control (ABAC)
+
+**Use when:** Access depends on resource attributes
+
+```typescript
+// Policy-based authorization
+interface Policy {
+  resource: string;
+  action: string;
+  condition: (user: User, resource: Resource) => boolean;
+}
+
+const policies: Policy[] = [
+  {
+    resource: 'post',
+    action: 'edit',
+    condition: (user, post) => post.authorId === user.id || user.role === 'admin',
+  },
+  {
+    resource: 'post',
+    action: 'delete',
+    condition: (user, post) => user.role === 'admin',
+  },
+];
+
+function authorize(user: User, action: string, resource: Resource): boolean {
+  const policy = policies.find(
+    (p) => p.resource === resource.type && p.action === action
+  );
+  return policy ? policy.condition(user, resource) : false;
+}
+```
+
+### 3. Resource Ownership
+
+**Always verify ownership before operations:**
+
+```typescript
+// Good: Verify ownership
+async function updatePost(userId: string, postId: string, data: PostData) {
+  const post = await db.posts.findById(postId);
+  
+  if (!post) {
+    throw new NotFoundError('Post not found');
+  }
+  
+  if (post.authorId !== userId && !isAdmin(userId)) {
+    throw new ForbiddenError('Not authorized to update this post');
+  }
+  
+  return db.posts.update(postId, data);
+}
+```
+
+### 4. Authorization Middleware
+
+**Centralize authorization checks:**
+
+```typescript
+// Centralized authorization middleware
+function authorize(options: { resource: string; action: string }) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user;
+      const resource = await getResource(req, options.resource);
+      
+      const allowed = await checkAuthorization(user, options.action, resource);
+      
+      if (!allowed) {
+        // Log for audit
+        logger.warn('Authorization denied', {
+          userId: user.id,
+          action: options.action,
+          resourceId: resource.id,
+        });
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+      
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
+}
+```
+
+---
+
+## Database-Level Authorization (RLS)
+
+For Supabase/PostgreSQL, use Row-Level Security:
+
+```sql
+-- Enable RLS
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+
+-- Users can only read their own posts
+CREATE POLICY "Users can read own posts"
+  ON posts FOR SELECT
+  USING (auth.uid() = author_id);
+
+-- Users can only update their own posts
+CREATE POLICY "Users can update own posts"
+  ON posts FOR UPDATE
+  USING (auth.uid() = author_id);
+```
+
+See `.cursor/rules/database/rls-policy-review.mdc` for complete RLS guidelines.
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Client-side only authorization
+- ❌ Hardcoded user IDs for admin checks
+- ❌ Missing ownership validation
+- ❌ Inconsistent permission checks across endpoints
+- ❌ Failing open (allowing access on error)
+- ❌ No audit logging for sensitive operations
+
+---
+
+## Security Checklist
+
+- [ ] All endpoints have authorization checks
+- [ ] Resource ownership validated before operations
+- [ ] Admin functions protected
+- [ ] Authorization logic centralized
+- [ ] RLS policies enabled (if using Supabase/Postgres)
+- [ ] Sensitive operations audited
+- [ ] Error responses don't leak information
+- [ ] Tests cover authorization scenarios
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [authentication.mdc](./authentication.mdc) - Authentication before authorization
+  - [../database/rls-policy-review.mdc](../database/rls-policy-review.mdc) - RLS policy standards
+  - [../supabase/supabase-rls.mdc](../supabase/supabase-rls.mdc) - Supabase RLS specifics
+- **Standards:**
+  - [access-control.md](../../standards/security/access-control.md) - Access control standards

@@ -1,0 +1,327 @@
+---
+description: Standards for creating, naming, and saving review reports. This rule applies when the user requests a review, a review command is executed, or the AI performs autonomous code/documentation reviews. Ensures consistent review report structure, naming, and storage location.
+version: 1.1.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 17:00:00 EST
+alwaysApply: false
+globs:
+  - **/docs/_reports/reviews/**/*.md
+type: Documentation Standard Rule - Defines review report creation and storage
+applicability: When creating review reports (user request, review command, or autonomous)
+dependencies: []
+relatedCommands:
+  - pr-review-check.md
+relatedRules:
+  - documentation-metadata.mdc
+  - documentation-versioning.mdc
+  - audit-reports.mdc
+relatedStandards:
+  - project-planning/documentation-management.md
+---
+
+# Review Reports Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- User says "review" in a prompt (e.g., "review this code", "review the architecture")
+- A review command is executed
+- The AI performs code review, PR review, or documentation review
+- Creating any document that reports review findings
+
+---
+
+## Core Principle
+
+**All review reports must be saved in a consistent location with standardized naming and structure.** This ensures:
+- Trackable review history
+- Consistent feedback format
+- Easy reference for follow-ups
+- Clear documentation of decisions
+
+---
+
+## Storage Location
+
+### Required Location
+
+**All review reports MUST be saved to:**
+```
+docs/_reports/reviews/
+```
+
+### Folder Structure
+
+```
+docs/
+└── _reports/
+    └── reviews/
+        ├── README.md                           # Index of all reviews
+        ├── code_review_2025-12-09.md           # Code review
+        ├── architecture_review_2025-12-09.md   # Architecture review
+        ├── pr_review_2025-12-09_pr123.md       # PR-specific review
+        ├── documentation_review_2025-12-01.md  # Documentation review
+        └── security_review_2025-11-15.md       # Security-focused review
+```
+
+---
+
+## Naming Convention
+
+### Required Format
+
+```
+{review_type}_review_{YYYY-MM-DD}[_context].md
+```
+
+**Components:**
+- `{review_type}` - Type of review in `snake_case`
+- `_review_` - Literal string (required)
+- `{YYYY-MM-DD}` - Date of review
+- `[_context]` - Optional context (e.g., PR number, feature name)
+
+### Review Type Examples
+
+| Review Type | Filename |
+|-------------|----------|
+| Code Review | `code_review_2025-12-09.md` |
+| PR Review | `pr_review_2025-12-09_pr123.md` |
+| Architecture | `architecture_review_2025-12-09.md` |
+| Documentation | `documentation_review_2025-12-09.md` |
+| Security | `security_review_2025-12-09.md` |
+| Performance | `performance_review_2025-12-09.md` |
+| Design | `design_review_2025-12-09.md` |
+| Feature | `feature_review_2025-12-09_user_auth.md` |
+| Module | `module_review_2025-12-09_logger.md` |
+
+---
+
+## Report Structure
+
+### Required Template
+
+Every review report MUST follow this structure:
+
+```markdown
+# {Review Type} Review Report
+
+## Metadata
+- **Status:** Active
+- **Created:** {YYYY-MM-DD}
+- **Last Updated:** {YYYY-MM-DD HH:MM:SS EST}
+- **Version:** 1.0
+- **Review Type:** {Type}
+- **Reviewer:** AI Agent / {Human Name}
+- **Subject:** {What was reviewed - PR, module, feature, etc.}
+- **Dependencies:** None
+
+---
+
+## Executive Summary
+
+Brief overview (2-3 sentences):
+- Overall assessment: ✅ Approved / ⚠️ Needs Changes / ❌ Rejected
+- Key points: X positive, Y suggestions, Z required changes
+- Primary recommendation
+
+---
+
+## Review Scope
+
+### What Was Reviewed
+- Files, modules, or components reviewed
+- PR number if applicable
+- Related tickets/issues
+
+### Review Criteria
+- What standards/guidelines were used
+- What aspects were evaluated
+
+### Out of Scope
+- What was NOT reviewed
+
+---
+
+## Review Findings
+
+### Positive Aspects (✅)
+
+What was done well:
+1. **{Aspect}:** Description of positive finding
+2. **{Aspect}:** Description of positive finding
+
+### Suggestions (💡)
+
+Optional improvements (not blocking):
+1. **{Location/File}:** Suggestion description
+   - Current: `code snippet`
+   - Suggested: `improved code`
+   - Reason: Why this would be better
+
+### Required Changes (⚠️)
+
+Must be addressed before approval:
+1. **{Location/File}:** Issue description
+   - Problem: What's wrong
+   - Impact: Why it matters
+   - Fix: How to resolve
+
+### Blocking Issues (❌)
+
+Critical issues preventing approval:
+1. **{Location/File}:** Issue description
+   - Problem: What's wrong
+   - Severity: Why this blocks
+   - Required: What must change
+
+---
+
+## Code Quality Assessment
+
+| Aspect | Rating | Notes |
+|--------|--------|-------|
+| Readability | ⭐⭐⭐⭐⭐ | Clear and well-structured |
+| Maintainability | ⭐⭐⭐⭐☆ | Good, minor suggestions |
+| Performance | ⭐⭐⭐⭐⭐ | Efficient implementation |
+| Security | ⭐⭐⭐⭐☆ | One minor concern |
+| Testing | ⭐⭐⭐☆☆ | Missing edge case tests |
+| Documentation | ⭐⭐⭐⭐⭐ | Well documented |
+
+---
+
+## Decision
+
+### Review Decision
+- **Status:** ✅ Approved / ⚠️ Approved with Comments / ❌ Changes Requested
+
+### Conditions (if applicable)
+- Condition 1 must be met before merge
+- Condition 2 must be addressed
+
+### Follow-up Items
+- [ ] Item 1 to track
+- [ ] Item 2 to track
+
+---
+
+## Reviewer Notes
+
+Additional context, rationale, or observations that don't fit above.
+
+---
+
+## Related Documents
+- [Related PR](link)
+- [Related Issue](link)
+- [Design Doc](link)
+- [Standard Referenced](link)
+```
+
+---
+
+## Review Index (README.md)
+
+### Maintain an Index
+
+The `docs/_reports/reviews/README.md` file MUST track all reviews:
+
+```markdown
+# Review Reports Index
+
+## Metadata
+- **Last Updated:** {Date}
+- **Total Reviews:** {Count}
+
+## Recent Reviews
+
+| Date | Type | Subject | Decision | Report |
+|------|------|---------|----------|--------|
+| 2025-12-09 | PR | #123 User Auth | ✅ Approved | [View](./pr_review_2025-12-09_pr123.md) |
+| 2025-12-09 | Architecture | API Design | ⚠️ Changes | [View](./architecture_review_2025-12-09.md) |
+| 2025-12-01 | Code | Logger Module | ✅ Approved | [View](./code_review_2025-12-01.md) |
+
+## Reviews by Type
+
+### PR Reviews
+- [2025-12-09 - PR #123](./pr_review_2025-12-09_pr123.md) - ✅ Approved
+
+### Architecture Reviews
+- [2025-12-09](./architecture_review_2025-12-09.md) - ⚠️ Changes Requested
+```
+
+---
+
+## Agent Behavior
+
+### When User Requests Review
+
+1. Determine review type from context
+2. Conduct review using appropriate criteria
+3. Create report using template above
+4. Save to `docs/_reports/reviews/{type}_review_{date}.md`
+5. Update `docs/_reports/reviews/README.md` index
+6. Report completion to user with link and summary
+
+### Quick Reviews vs Full Reviews
+
+**Quick Review (no formal report):**
+- Brief feedback in chat
+- No persistent documentation needed
+- User just wants quick opinion
+
+**Full Review (formal report):**
+- User says "create a review", "document review", "formal review"
+- Part of PR process
+- Needs to be referenced later
+- Compliance/audit requirement
+
+---
+
+## Validation Checklist
+
+Before saving a review report:
+
+- [ ] Saved to `docs/_reports/reviews/`
+- [ ] Filename follows `{type}_review_{YYYY-MM-DD}.md` format
+- [ ] Report uses required template structure
+- [ ] Executive summary present
+- [ ] Clear decision (Approved/Changes/Rejected)
+- [ ] Findings categorized (positive/suggestions/required/blocking)
+- [ ] Metadata complete
+- [ ] Index updated in `README.md`
+
+---
+
+## Related Files
+
+- **Commands:**
+  - [pr-review-check.md](../../.cursor/commands/pr-review-check.md) - PR review command
+- **Rules:**
+  - [documentation-metadata.mdc](./documentation-metadata.mdc) - Metadata requirements
+  - [audit-reports.mdc](./audit-reports.mdc) - Audit report standards
+  - [summary-reports.mdc](./summary-reports.mdc) - Summary report standards
+- **Standards:**
+  - [documentation-management.md](../../standards/project-planning/documentation-management.md) - Documentation standards
+
+---
+
+## How to Use This Rule
+
+**This rule applies when creating any review report.**
+
+**Agents should:**
+1. Save all review reports to `docs/_reports/reviews/`
+2. Use naming format: `{type}_review_{YYYY-MM-DD}.md`
+3. Follow the required template structure
+4. Categorize findings clearly
+5. Provide clear decision (Approved/Changes/Rejected)
+6. Update the review index README.md
+
+**Trigger words:**
+- "review", "code review", "pr review"
+- "evaluate", "assess", "analyze" (in review context)
+- Review command execution
+
+---
+
+*This rule ensures consistent, discoverable, and actionable review reports across all projects.*

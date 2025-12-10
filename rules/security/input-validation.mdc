@@ -1,0 +1,275 @@
+---
+description: Input validation standards for preventing injection attacks, XSS, and data corruption. This rule covers validation libraries (Zod, Pydantic), sanitization techniques, type coercion handling, and error messaging. Agents must validate all external inputs, use schema validation libraries, sanitize HTML/SQL inputs, implement proper error handling without leaking information, and validate on both client and server sides.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/api/**,**/routes/**,**/handlers/**,**/validators/**
+type: Security Rule - Input validation standards
+applicability: API endpoints and form handlers
+dependencies: []
+relatedCommands: []
+relatedRules: [[api-security.mdc], [../api/api-routes.mdc], [../typescript/zod-schemas.mdc]]
+relatedStandards: []
+---
+
+# Input Validation Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Handling user input (forms, API requests)
+- Processing external data
+- Building API endpoints
+- Implementing data transformations
+
+---
+
+## Core Principles
+
+1. **Never trust external data** - Validate everything from outside
+2. **Validate early** - Check inputs at entry points
+3. **Use type-safe validation** - Leverage TypeScript + Zod/Pydantic
+4. **Fail securely** - Don't expose internal details in errors
+
+---
+
+## Validation Libraries
+
+### TypeScript/JavaScript: Zod
+
+```typescript
+import { z } from 'zod';
+
+// Define schema
+const userSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(12).max(128),
+  name: z.string().min(1).max(100),
+  age: z.number().int().min(0).max(150).optional(),
+});
+
+// Type inference
+type User = z.infer<typeof userSchema>;
+
+// Validate input
+function createUser(input: unknown): User {
+  return userSchema.parse(input);
+}
+
+// Safe validation (returns result object)
+function safeCreateUser(input: unknown) {
+  const result = userSchema.safeParse(input);
+  if (!result.success) {
+    return { error: formatZodError(result.error) };
+  }
+  return { data: result.data };
+}
+```
+
+### Python: Pydantic
+
+```python
+from pydantic import BaseModel, EmailStr, validator
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    
+    @validator('password')
+    def password_strength(cls, v):
+        if len(v) < 12:
+            raise ValueError('Password must be at least 12 characters')
+        return v
+    
+    @validator('name')
+    def name_not_empty(cls, v):
+        if not v.strip():
+            raise ValueError('Name cannot be empty')
+        return v.strip()
+```
+
+---
+
+## Validation Patterns
+
+### 1. API Request Validation
+
+```typescript
+// Good: Validate request body
+app.post('/users', async (req, res) => {
+  const result = userSchema.safeParse(req.body);
+  
+  if (!result.success) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      details: result.error.flatten(),
+    });
+  }
+  
+  const user = await createUser(result.data);
+  res.json(user);
+});
+```
+
+### 2. URL Parameters
+
+```typescript
+const idSchema = z.string().uuid();
+const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+app.get('/users/:id', async (req, res) => {
+  const id = idSchema.parse(req.params.id);
+  // ...
+});
+
+app.get('/users', async (req, res) => {
+  const { page, limit } = paginationSchema.parse(req.query);
+  // ...
+});
+```
+
+### 3. Sanitization
+
+```typescript
+import DOMPurify from 'dompurify';
+import { JSDOM } from 'jsdom';
+
+const window = new JSDOM('').window;
+const purify = DOMPurify(window);
+
+// Sanitize HTML content
+function sanitizeHtml(dirty: string): string {
+  return purify.sanitize(dirty, {
+    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p'],
+    ALLOWED_ATTR: ['href'],
+  });
+}
+
+// SQL parameterization (never interpolate user input)
+const query = 'SELECT * FROM users WHERE email = $1';
+const result = await db.query(query, [email]); // Parameterized
+```
+
+### 4. File Uploads
+
+```typescript
+const fileSchema = z.object({
+  mimetype: z.enum(['image/jpeg', 'image/png', 'image/gif']),
+  size: z.number().max(5 * 1024 * 1024), // 5MB max
+  originalname: z.string().regex(/^[\w\-. ]+$/), // Safe filename
+});
+
+function validateUpload(file: Express.Multer.File) {
+  return fileSchema.parse(file);
+}
+```
+
+---
+
+## Error Handling
+
+### Safe Error Responses
+
+```typescript
+// Good: Generic error for external clients
+function formatValidationError(error: ZodError): ValidationError {
+  return {
+    error: 'Validation failed',
+    fields: error.errors.map((e) => ({
+      field: e.path.join('.'),
+      message: e.message,
+    })),
+  };
+}
+
+// Good: Detailed logging for debugging
+logger.warn('Validation failed', {
+  input: sanitizeForLogging(input),
+  errors: error.errors,
+});
+```
+
+### Never Expose Internal Details
+
+```typescript
+// Bad: Exposes internal structure
+res.status(400).json({ error: error.stack });
+
+// Good: Generic message
+res.status(400).json({ error: 'Invalid request' });
+```
+
+---
+
+## Common Validations
+
+```typescript
+// Email
+z.string().email()
+
+// URL
+z.string().url()
+
+// UUID
+z.string().uuid()
+
+// Date
+z.coerce.date()
+
+// Phone (with regex)
+z.string().regex(/^\+?[1-9]\d{1,14}$/)
+
+// Enum
+z.enum(['active', 'inactive', 'pending'])
+
+// Optional with default
+z.string().optional().default('default')
+
+// Nullable
+z.string().nullable()
+
+// Array with constraints
+z.array(z.string()).min(1).max(10)
+
+// Record/object
+z.record(z.string(), z.number())
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Trusting client-side validation alone
+- ❌ Using `any` type for inputs
+- ❌ String interpolation in SQL queries
+- ❌ Accepting arbitrary file types
+- ❌ No max length on string inputs
+- ❌ Exposing validation internals in errors
+- ❌ Type coercion without validation
+
+---
+
+## Security Checklist
+
+- [ ] All API inputs validated with schema
+- [ ] URL parameters validated
+- [ ] Query strings validated
+- [ ] File uploads validated (type, size, name)
+- [ ] HTML content sanitized
+- [ ] SQL queries parameterized
+- [ ] Error messages don't leak internals
+- [ ] Both client and server validation
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [api-security.mdc](./api-security.mdc) - API security standards
+  - [../api/api-routes.mdc](../api/api-routes.mdc) - API route patterns
+  - [../typescript/zod-schemas.mdc](../typescript/zod-schemas.mdc) - Zod patterns

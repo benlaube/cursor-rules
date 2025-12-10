@@ -1,0 +1,278 @@
+---
+description: Auto-applied rule for discovering and selecting appropriate modules from the modules/ directory. Helps AI agents find the right module for a given task and understand module capabilities.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 06:49:53 EST
+alwaysApply: false
+globs: modules/**/*.md
+type: Behavioral Rule - Module discovery and selection guidance
+applicability: When starting new features, implementing common patterns, browsing modules/ directory, or when user requests functionality that might be available as a module
+dependencies: []
+relatedCommands: []
+relatedRules: [module-integration-patterns.mdc, module-documentation-requirements.mdc, ai-interaction-rules.mdc]
+relatedStandards: [module-structure.md, architecture/supabase-ai-agent-guide.md]
+---
+
+# Module Discovery & Selection Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Starting a new feature or task
+- Implementing common patterns (logging, error handling, API routes, auth, etc.)
+- User requests functionality that might exist as a module
+- Before writing new boilerplate code
+- When searching for reusable solutions
+
+---
+
+## Core Principle
+
+**Always check `modules/` directory before implementing new functionality.** Modules provide tested, documented, and reusable solutions for common patterns. Using existing modules reduces code duplication, ensures consistency, and saves development time.
+
+**Source Standard:** `standards/module-structure.md` and `standards/architecture/supabase-ai-agent-guide.md`
+
+---
+
+## Agent Responsibilities
+
+### 1. Module Discovery Process
+
+**Before implementing any feature, follow this discovery process:**
+
+1. **List Available Modules:**
+   - Check `modules/` directory for available modules
+   - Read module README.md files to understand capabilities
+   - Note module dependencies and requirements
+
+2. **Search by Functionality:**
+   - Need logging? → Check `modules/logger-module/`
+   - Need API routes? → Check `modules/backend-api/`
+   - Need authentication? → Check `modules/auth-profile-sync/`
+   - Need error handling? → Check `modules/error-handler/`
+   - Need settings/secrets? → Check `modules/settings-manager/`
+   - Need sitemap? → Check `modules/sitemap-module/`
+   - Need Supabase utilities? → Check `modules/supabase-core-typescript/` (TS) or `modules/supabase-core-python/` (Python)
+   - Need testing mocks? → Check `modules/testing-module/`
+
+3. **Review Module Documentation:**
+   - Read module README.md for overview
+   - Check INTEGRATION_GUIDE.md if available
+   - Review usage examples
+   - Verify dependencies are compatible
+
+### 2. Module Selection Decision Tree
+
+**Use this decision tree to select the right module:**
+
+```
+Need logging?
+├─ YES → logger-module
+└─ NO → Continue
+
+Need API routes (Next.js)?
+├─ YES → backend-api
+└─ NO → Continue
+
+Need authentication/user management?
+├─ YES → auth-profile-sync
+└─ NO → Continue
+
+Need error handling/retry logic?
+├─ YES → error-handler
+└─ NO → Continue
+
+Need settings/secrets management?
+├─ YES → settings-manager
+└─ NO → Continue
+
+Need sitemap generation?
+├─ YES → sitemap-module
+└─ NO → Continue
+
+Need Supabase utilities?
+├─ TypeScript/Next.js → supabase-core-typescript
+├─ Python (Django/FastAPI/Flask) → supabase-core-python
+└─ NO → Continue
+
+Need testing utilities?
+├─ YES → testing-module
+└─ NO → Continue
+
+No module found → Consider creating new module (see module-creation-decision.mdc)
+```
+
+### 3. Module Comparison (When Multiple Options Exist)
+
+**If multiple modules solve similar problems, compare:**
+
+1. **Dependencies:**
+   - Fewer dependencies = better
+   - Check if dependencies conflict with project
+   - Verify peer dependencies are available
+
+2. **Complexity:**
+   - Simpler modules are easier to integrate
+   - Check integration guide length
+   - Review code complexity
+
+3. **Maintenance Status:**
+   - Check module README for last updated date
+   - Look for deprecation notices
+   - Verify module is actively maintained
+
+4. **Documentation Quality:**
+   - Clear README with examples
+   - Integration guide available
+   - Usage examples are copy-pasteable
+
+5. **Framework Compatibility:**
+   - Verify module works with project's framework
+   - Check runtime requirements (Node.js, Browser, Edge)
+   - Verify TypeScript/Python compatibility
+
+### 4. Module Capability Verification
+
+**Before selecting a module, verify:**
+
+1. **Feature Match:**
+   - Module solves the exact problem
+   - Module has required features
+   - Module supports required use cases
+
+2. **Compatibility:**
+   - Framework compatibility (Next.js, Express, etc.)
+   - Runtime compatibility (Node.js, Browser, Edge)
+   - Language compatibility (TypeScript, JavaScript, Python)
+
+3. **Dependencies:**
+   - All dependencies are available
+   - No version conflicts
+   - Peer dependencies are compatible
+
+4. **Integration Effort:**
+   - Integration guide is clear
+   - Setup is straightforward
+   - Migration path exists (if replacing existing code)
+
+### 5. Module-Specific Guides
+
+**For Supabase modules, reference:**
+- `standards/architecture/supabase-ai-agent-guide.md` - Comprehensive Supabase module guide
+- Module decision tree for Supabase-specific needs
+
+**For general modules:**
+- `standards/module-structure.md` - Module structure standards
+- Module README.md for specific usage
+
+---
+
+## Examples
+
+### Example 1: Need Logging
+
+**User Request:** "Add logging to the API routes"
+
+**Agent Behavior:**
+1. ✅ Check `modules/logger-module/` - Found!
+2. ✅ Read `modules/logger-module/README.md` - Supports Node.js, Browser, Edge
+3. ✅ Check dependencies - Requires pino, zod, uuid
+4. ✅ Verify integration - Has Express/Next.js middleware
+5. ✅ Select module - Use logger-module
+6. ✅ Reference integration guide - `modules/logger-module/docs/integration.md`
+
+**Result:** Use logger-module instead of implementing custom logging
+
+### Example 2: Need API Routes
+
+**User Request:** "Create API route for user posts"
+
+**Agent Behavior:**
+1. ✅ Check `modules/backend-api/` - Found!
+2. ✅ Read `modules/backend-api/README.md` - Next.js API route wrapper
+3. ✅ Check dependencies - Requires @supabase/ssr, zod
+4. ✅ Verify compatibility - Works with Next.js App Router
+5. ✅ Select module - Use backend-api
+6. ✅ Reference integration guide - `modules/backend-api/INTEGRATION_GUIDE.md`
+
+**Result:** Use backend-api module for standardized API routes
+
+### Example 3: No Module Found
+
+**User Request:** "Create custom payment processor"
+
+**Agent Behavior:**
+1. ✅ Check `modules/` - No payment module found
+2. ✅ Check if pattern is common enough for module
+3. ✅ Consider: Is this project-specific or reusable?
+4. ✅ Decision: Project-specific business logic → Don't create module
+5. ✅ Implement inline code
+
+**Result:** Implement inline (not a candidate for module)
+
+---
+
+## Integration with Other Rules
+
+This rule works with:
+
+### `module-integration-patterns.mdc`
+- After selecting a module, use integration patterns rule to integrate it
+
+### `module-documentation-requirements.mdc`
+- Verify selected module has complete documentation before using
+
+### `ai-interaction-rules.mdc`
+- Implements "Module Usage (Don't Reinvent the Wheel)" principle
+
+### `module-creation-decision.mdc`
+- If no module found, use creation decision rule to determine if new module is needed
+
+---
+
+## Related Files
+
+- **Standards:**
+  - [module-structure.md](../../standards/module-structure.md) - Module structure requirements
+  - [architecture/supabase-ai-agent-guide.md](../../standards/architecture/supabase-ai-agent-guide.md) - Supabase module guide
+- **Rules:**
+  - [module-integration-patterns.mdc](./module-integration-patterns.mdc) - How to integrate selected modules
+  - [module-documentation-requirements.mdc](./module-documentation-requirements.mdc) - Documentation verification
+  - [module-creation-decision.mdc](./module-creation-decision.mdc) - When to create new modules
+  - [ai-interaction-rules.mdc](./ai-interaction-rules.mdc) - General module usage principle
+- **Modules:**
+  - `modules/*/README.md` - Module documentation
+  - `modules/*/INTEGRATION_GUIDE.md` - Integration guides
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when starting new features or implementing common patterns.**
+
+**Agents should:**
+1. **Always check `modules/` first** before implementing new functionality
+2. **Use the decision tree** to find appropriate modules
+3. **Compare modules** if multiple options exist
+4. **Verify compatibility** before selecting a module
+5. **Reference module documentation** for usage patterns
+6. **Consider creating new module** only if no suitable module exists (see module-creation-decision.mdc)
+
+**Discovery checklist:**
+- [ ] Checked `modules/` directory for available modules
+- [ ] Read module README.md files
+- [ ] Verified module solves the problem
+- [ ] Checked dependencies are compatible
+- [ ] Reviewed integration guide (if available)
+- [ ] Selected appropriate module or decided to implement inline
+
+**Selection criteria:**
+- [ ] Module solves the exact problem
+- [ ] Dependencies are minimal and compatible
+- [ ] Documentation is clear and complete
+- [ ] Integration effort is reasonable
+- [ ] Module is actively maintained
+
+---
+
+*This rule ensures AI agents discover and select appropriate modules before implementing new functionality, reducing code duplication and ensuring consistency.*

@@ -1,0 +1,224 @@
+---
+description: Logging standards for effective debugging and monitoring. This rule covers log levels, structured logging, sensitive data handling, and log aggregation. Agents must use appropriate log levels, implement structured JSON logging, never log sensitive data, and include contextual information in logs.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.py
+type: Error Handling Rule - Logging standards
+applicability: All logging
+dependencies: []
+relatedCommands: []
+relatedRules: [[error-standards.mdc], [../security/secrets-management.mdc]]
+relatedStandards: []
+---
+
+# Logging Standards Rule
+
+## When This Rule Applies
+
+This rule **always applies** when:
+- Adding log statements
+- Debugging issues
+- Implementing monitoring
+- Setting up log aggregation
+
+---
+
+## Core Principles
+
+1. **Structured logging** - JSON format for parsing
+2. **Appropriate levels** - Match severity to level
+3. **No sensitive data** - Never log credentials
+4. **Contextual info** - Include useful metadata
+
+---
+
+## Log Levels
+
+| Level | When to Use | Examples |
+|-------|-------------|----------|
+| **error** | Application errors needing attention | Database failures, API errors |
+| **warn** | Potential issues, degraded service | Rate limiting, retries |
+| **info** | Normal operations, business events | User login, order placed |
+| **debug** | Development details | Query results, function entry |
+
+```typescript
+// Examples
+logger.error('Database connection failed', { host, port, error: err.message });
+logger.warn('Rate limit approaching', { userId, requestCount, limit });
+logger.info('User registered', { userId, email });
+logger.debug('Processing request', { path, params });
+```
+
+---
+
+## Structured Logging
+
+### Logger Setup
+
+```typescript
+import pino from 'pino';
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  formatters: {
+    level: (label) => ({ level: label }),
+  },
+  timestamp: () => `,"timestamp":"${new Date().toISOString()}"`,
+});
+
+// Contextual logger
+function createContextLogger(context: Record<string, any>) {
+  return logger.child(context);
+}
+
+// Usage in request handler
+const requestLogger = createContextLogger({
+  requestId: req.id,
+  userId: req.user?.id,
+});
+```
+
+### Log Format
+
+```json
+{
+  "level": "error",
+  "timestamp": "2025-12-08T10:00:00.000Z",
+  "requestId": "abc-123",
+  "userId": "user-456",
+  "message": "Database query failed",
+  "error": "Connection timeout",
+  "query": "SELECT * FROM users",
+  "duration": 5000
+}
+```
+
+---
+
+## What to Log
+
+### Always Log
+- ✅ Application startup/shutdown
+- ✅ Authentication events (login, logout, failures)
+- ✅ Authorization failures
+- ✅ Business events (orders, payments)
+- ✅ Error details (with context)
+- ✅ Performance issues
+
+### Never Log
+- ❌ Passwords or credentials
+- ❌ API keys or tokens
+- ❌ Personal data (PII)
+- ❌ Full credit card numbers
+- ❌ Session tokens
+
+---
+
+## Sensitive Data Handling
+
+```typescript
+// Sanitize before logging
+function sanitizeForLogging(data: any): any {
+  const sensitive = ['password', 'token', 'apiKey', 'secret', 'authorization'];
+  
+  if (typeof data !== 'object' || data === null) {
+    return data;
+  }
+  
+  return Object.entries(data).reduce((acc, [key, value]) => {
+    if (sensitive.some(s => key.toLowerCase().includes(s))) {
+      acc[key] = '[REDACTED]';
+    } else if (typeof value === 'object') {
+      acc[key] = sanitizeForLogging(value);
+    } else {
+      acc[key] = value;
+    }
+    return acc;
+  }, {} as any);
+}
+
+// Usage
+logger.info('Request received', sanitizeForLogging(req.body));
+```
+
+---
+
+## Request Logging
+
+```typescript
+// Request logging middleware
+function requestLogger(req: Request, res: Response, next: NextFunction) {
+  const start = Date.now();
+  
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const level = res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info';
+    
+    logger[level]('Request completed', {
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      duration,
+      userId: req.user?.id,
+    });
+  });
+  
+  next();
+}
+```
+
+---
+
+## Error Logging
+
+```typescript
+// Error logging with stack trace
+function logError(error: Error, context?: Record<string, any>) {
+  logger.error('Error occurred', {
+    message: error.message,
+    name: error.name,
+    stack: error.stack,
+    ...context,
+  });
+}
+
+// Usage
+try {
+  await processOrder(order);
+} catch (error) {
+  logError(error, { orderId: order.id, userId: user.id });
+  throw error;
+}
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ `console.log` in production
+- ❌ Logging sensitive data
+- ❌ Missing error context
+- ❌ Too verbose logging
+- ❌ Inconsistent log format
+- ❌ No log levels
+
+---
+
+## Checklist
+
+- [ ] Structured JSON logging
+- [ ] Appropriate log levels used
+- [ ] Sensitive data sanitized
+- [ ] Request logging enabled
+- [ ] Error context included
+- [ ] Log aggregation configured
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [error-standards.mdc](./error-standards.mdc) - Error handling
+  - [../security/secrets-management.mdc](../security/secrets-management.mdc) - Sensitive data

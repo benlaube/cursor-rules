@@ -1,0 +1,378 @@
+---
+description: Standards for creating, naming, and saving summary reports. This rule applies when the user requests a summary, or the AI creates summary documentation. Ensures consistent summary report structure, naming, and storage location.
+version: 1.1.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 17:00:00 EST
+alwaysApply: false
+globs:
+  - **/docs/_reports/summaries/**/*.md
+type: Documentation Standard Rule - Defines summary report creation and storage
+applicability: When creating summary reports (user request or autonomous)
+dependencies: []
+relatedCommands: []
+relatedRules:
+  - documentation-metadata.mdc
+  - documentation-versioning.mdc
+  - audit-reports.mdc
+  - review-reports.mdc
+relatedStandards:
+  - project-planning/documentation-management.md
+---
+
+# Summary Reports Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- User says "summarize", "create summary", "summary of"
+- The AI creates summary documentation of work completed
+- Creating executive summaries, project summaries, or session summaries
+- Documenting completed sprints, phases, or milestones
+
+---
+
+## Core Principle
+
+**All summary reports must be saved in a consistent location with standardized naming and structure.** This ensures:
+- Easy reference for stakeholders
+- Clear documentation of progress
+- Trackable project history
+- Consistent executive communication
+
+---
+
+## Storage Location
+
+### Required Location
+
+**All summary reports MUST be saved to:**
+```
+docs/_reports/summaries/
+```
+
+### Folder Structure
+
+```
+docs/
+└── _reports/
+    └── summaries/
+        ├── README.md                           # Index of all summaries
+        ├── project_summary_2025-12-09.md       # Project overview
+        ├── sprint_summary_2025-12-09.md        # Sprint completion
+        ├── session_summary_2025-12-09.md       # Work session summary
+        ├── feature_summary_2025-12-09_auth.md  # Feature completion
+        ├── migration_summary_2025-12-01.md     # Migration summary
+        └── release_summary_2025-11-15_v2.md    # Release summary
+```
+
+---
+
+## Naming Convention
+
+### Required Format
+
+```
+{summary_type}_summary_{YYYY-MM-DD}[_context].md
+```
+
+**Components:**
+- `{summary_type}` - Type of summary in `snake_case`
+- `_summary_` - Literal string (required)
+- `{YYYY-MM-DD}` - Date of summary
+- `[_context]` - Optional context (e.g., version, feature, sprint)
+
+### Summary Type Examples
+
+| Summary Type | Filename |
+|--------------|----------|
+| Project | `project_summary_2025-12-09.md` |
+| Sprint | `sprint_summary_2025-12-09_sprint14.md` |
+| Session | `session_summary_2025-12-09.md` |
+| Feature | `feature_summary_2025-12-09_user_auth.md` |
+| Release | `release_summary_2025-12-09_v2_0.md` |
+| Migration | `migration_summary_2025-12-09_db.md` |
+| Phase | `phase_summary_2025-12-09_phase2.md` |
+| Weekly | `weekly_summary_2025-12-09.md` |
+| Monthly | `monthly_summary_2025-12.md` |
+| Quarterly | `quarterly_summary_2025-Q4.md` |
+
+---
+
+## Report Structure
+
+### Required Template
+
+Every summary report MUST follow this structure:
+
+```markdown
+# {Summary Type} Summary
+
+## Metadata
+- **Status:** Active
+- **Created:** {YYYY-MM-DD}
+- **Last Updated:** {YYYY-MM-DD HH:MM:SS EST}
+- **Version:** 1.0
+- **Summary Type:** {Type}
+- **Author:** AI Agent / {Human Name}
+- **Period:** {Time period covered}
+- **Dependencies:** None
+
+---
+
+## Executive Summary
+
+**TL;DR** (2-3 sentences):
+Brief overview of what this summary covers and key takeaways.
+
+### Key Metrics
+
+| Metric | Value | Change |
+|--------|-------|--------|
+| Tasks Completed | X | +Y from last period |
+| Issues Resolved | X | +Y from last period |
+| New Features | X | - |
+| Documentation Updates | X | - |
+
+---
+
+## Overview
+
+### Purpose
+What this summary covers and why it was created.
+
+### Scope
+- Time period: {Start Date} - {End Date}
+- Areas covered: {List of areas/systems}
+- Excluded: {What's not covered}
+
+---
+
+## Accomplishments
+
+### Completed Work
+
+#### Features Delivered
+1. **{Feature Name}**
+   - Description: Brief description
+   - Impact: What it enables
+   - Related: [Link to PR/Issue]
+
+2. **{Feature Name}**
+   - Description: Brief description
+   - Impact: What it enables
+   - Related: [Link to PR/Issue]
+
+#### Bug Fixes
+1. **{Bug Title}** - Brief description of fix
+2. **{Bug Title}** - Brief description of fix
+
+#### Improvements
+1. **{Improvement}** - Description
+2. **{Improvement}** - Description
+
+### Documentation Updates
+- [Document 1](link) - What changed
+- [Document 2](link) - What changed
+
+### Infrastructure/DevOps
+- {Change 1}
+- {Change 2}
+
+---
+
+## Challenges and Solutions
+
+### Challenge 1: {Title}
+- **Problem:** Description
+- **Impact:** How it affected work
+- **Solution:** How it was resolved
+- **Lesson Learned:** What to do differently
+
+### Challenge 2: {Title}
+[Same format]
+
+---
+
+## In Progress
+
+### Ongoing Work
+| Item | Status | ETA | Blockers |
+|------|--------|-----|----------|
+| {Item 1} | 75% | {Date} | None |
+| {Item 2} | 50% | {Date} | Waiting on X |
+
+### Blocked Items
+- **{Item}:** Blocked by {reason}
+
+---
+
+## Upcoming
+
+### Next Period Goals
+1. {Goal 1}
+2. {Goal 2}
+3. {Goal 3}
+
+### Planned Features
+- {Feature 1}
+- {Feature 2}
+
+### Known Risks
+- {Risk 1} - Mitigation plan
+- {Risk 2} - Mitigation plan
+
+---
+
+## Statistics
+
+### Code Changes
+- Files Modified: X
+- Lines Added: +Y
+- Lines Removed: -Z
+- Commits: N
+
+### Time Tracking (if applicable)
+- Total Hours: X
+- By Category:
+  - Development: X hours
+  - Review: X hours
+  - Documentation: X hours
+
+---
+
+## Related Documents
+
+- [Previous Summary](./previous_summary.md)
+- [Project Roadmap](../../roadmap.md)
+- [Sprint Board](link)
+- [Release Notes](link)
+
+---
+
+## Appendix
+
+### Detailed Changelog
+If needed, include detailed list of all changes.
+
+### Supporting Data
+Additional data, charts, or metrics.
+```
+
+---
+
+## Summary Index (README.md)
+
+### Maintain an Index
+
+The `docs/_reports/summaries/README.md` file MUST track all summaries:
+
+```markdown
+# Summary Reports Index
+
+## Metadata
+- **Last Updated:** {Date}
+- **Total Summaries:** {Count}
+
+## Recent Summaries
+
+| Date | Type | Period | Report |
+|------|------|--------|--------|
+| 2025-12-09 | Sprint | Sprint 14 | [View](./sprint_summary_2025-12-09_sprint14.md) |
+| 2025-12-09 | Session | 12-09-2025 | [View](./session_summary_2025-12-09.md) |
+| 2025-12-01 | Release | v2.0.0 | [View](./release_summary_2025-12-01_v2_0.md) |
+
+## Summaries by Type
+
+### Sprint Summaries
+- [Sprint 14](./sprint_summary_2025-12-09_sprint14.md) - 2025-12-09
+- [Sprint 13](./sprint_summary_2025-11-25_sprint13.md) - 2025-11-25
+
+### Release Summaries
+- [v2.0.0](./release_summary_2025-12-01_v2_0.md) - 2025-12-01
+
+### Monthly Summaries
+- [December 2025](./monthly_summary_2025-12.md)
+- [November 2025](./monthly_summary_2025-11.md)
+```
+
+---
+
+## Agent Behavior
+
+### When User Requests Summary
+
+1. Determine summary type from context
+2. Gather relevant information
+3. Create report using template above
+4. Save to `docs/_reports/summaries/{type}_summary_{date}.md`
+5. Update `docs/_reports/summaries/README.md` index
+6. Report completion to user with link
+
+### Quick Summaries vs Full Summaries
+
+**Quick Summary (no formal report):**
+- Brief summary in chat
+- No persistent documentation needed
+- User just wants quick overview
+
+**Full Summary (formal report):**
+- User says "create a summary document", "document summary"
+- End of sprint/phase/project
+- Needs to be referenced later
+- Stakeholder communication
+
+### Session Summaries
+
+At end of significant work sessions, consider creating a session summary:
+- What was accomplished
+- What was changed
+- What's next
+- Any issues encountered
+
+---
+
+## Validation Checklist
+
+Before saving a summary report:
+
+- [ ] Saved to `docs/_reports/summaries/`
+- [ ] Filename follows `{type}_summary_{YYYY-MM-DD}.md` format
+- [ ] Report uses required template structure
+- [ ] Executive summary present
+- [ ] Accomplishments documented
+- [ ] Upcoming work identified
+- [ ] Metadata complete
+- [ ] Index updated in `README.md`
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [documentation-metadata.mdc](./documentation-metadata.mdc) - Metadata requirements
+  - [audit-reports.mdc](./audit-reports.mdc) - Audit report standards
+  - [review-reports.mdc](./review-reports.mdc) - Review report standards
+- **Standards:**
+  - [documentation-management.md](../../standards/project-planning/documentation-management.md) - Documentation standards
+
+---
+
+## How to Use This Rule
+
+**This rule applies when creating any summary report.**
+
+**Agents should:**
+1. Save all summary reports to `docs/_reports/summaries/`
+2. Use naming format: `{type}_summary_{YYYY-MM-DD}.md`
+3. Follow the required template structure
+4. Include accomplishments and upcoming work
+5. Update the summary index README.md
+
+**Trigger words:**
+- "summarize", "summary", "create summary"
+- "wrap up", "recap", "overview" (in summary context)
+- End of sprint/phase/session
+
+---
+
+*This rule ensures consistent, discoverable summary reports that effectively communicate progress and status.*

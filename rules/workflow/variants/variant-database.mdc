@@ -1,0 +1,231 @@
+---
+description: Database Migration workflow variant for schema changes, data migrations, and database-related tasks. Includes backup verification, rollback testing, and CHANGELOG-DATABASE.md requirements.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 09:37:22 EST
+alwaysApply: false
+globs:
+type: Workflow Variant Rule - Database migration handling
+applicability: When task involves database schema changes or data migrations
+dependencies: []
+relatedCommands: []
+relatedRules: [[../task-workflow.mdc](../task-workflow.mdc), [../workflow-variants.mdc](../workflow-variants.mdc), [../../database/database-schema-enforcement.mdc](../../database/database-schema-enforcement.mdc)]
+relatedStandards: [[database/schema.md](../../../standards/database/schema.md)]
+---
+
+# Database Migration Workflow Variant
+
+This variant adds database-specific checks and requirements to the standard workflow for schema changes and data migrations.
+
+> **Parent Rule:** See `workflow-variants.mdc` for variant selection and `task-workflow.mdc` for the complete workflow.
+
+---
+
+## When to Use
+
+- New table creation
+- Column additions/modifications
+- Index changes
+- Data migrations
+- Schema refactoring
+- RLS policy changes
+
+## Trigger Keywords
+
+User request involves: "add column", "create table", "database migration", "schema change", "alter table", "RLS policy"
+
+---
+
+## Step-by-Step Modifications
+
+### Step 0: Migration Analysis
+
+**Do:**
+- Identify migration type:
+  - **Schema Change:** DDL operations (CREATE, ALTER, DROP)
+  - **Data Migration:** DML operations (INSERT, UPDATE, DELETE)
+  - **Rollback:** Reverting a previous migration
+- Assess impact on existing data
+- Identify dependent code changes
+- Plan rollback strategy
+
+**Questions to Ask:**
+- Will this affect existing data?
+- What's the rollback plan?
+- Are there dependent code changes needed?
+- Should this be a reversible migration?
+
+### Step 1: Database Pre-Flight
+
+**Do:**
+- Standard pre-flight checks
+- Verify database connection
+- Check current schema state
+- Verify backup exists or create one
+- Review existing migrations
+- Check for pending migrations
+
+**Additional Checks:**
+- `supabase status` (if using Supabase)
+- Review `CHANGELOG-DATABASE.md` for recent changes
+- Check for conflicting migrations
+
+### Step 2: Migration Development
+
+**Do:**
+- Write migration with up/down scripts
+- Include `COMMENT ON` statements for all tables/columns
+- Use descriptive names (not abbreviated)
+- Include `created_at` and `updated_at` columns for new tables
+- Test migration locally
+- Test rollback locally
+
+**Migration Script Requirements:**
+
+```sql
+-- UP migration
+CREATE TABLE example (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE example IS 'Description of what this table stores';
+COMMENT ON COLUMN example.id IS 'Unique identifier';
+COMMENT ON COLUMN example.name IS 'Description of name field';
+COMMENT ON COLUMN example.created_at IS 'Timestamp when record was created';
+COMMENT ON COLUMN example.updated_at IS 'Timestamp when record was last updated';
+
+-- DOWN migration (rollback)
+DROP TABLE IF EXISTS example;
+```
+
+### Step 3: Migration Validation
+
+**Do:**
+- Run migration on local/dev database
+- Verify schema changes applied correctly
+- Test rollback works
+- Run dependent code tests
+- Update `CHANGELOG-DATABASE.md`
+- Verify RLS policies if applicable
+
+**Validation Queries:**
+
+```sql
+-- Verify table structure
+\d+ table_name
+
+-- Verify comments
+SELECT obj_description('table_name'::regclass, 'pg_class');
+
+-- Verify columns
+SELECT column_name, data_type, is_nullable 
+FROM information_schema.columns 
+WHERE table_name = 'table_name';
+```
+
+---
+
+## Database Migration Checklist
+
+```markdown
+- [ ] Migration type identified (schema/data/rollback)
+- [ ] Impact analysis completed
+- [ ] Backup verified
+- [ ] Migration script written with:
+  - [ ] UP migration
+  - [ ] DOWN migration (rollback)
+  - [ ] COMMENT ON statements
+  - [ ] Descriptive names
+  - [ ] created_at/updated_at columns (if new table)
+- [ ] Migration tested locally
+- [ ] Rollback tested locally
+- [ ] Dependent code updated
+- [ ] CHANGELOG-DATABASE.md updated
+- [ ] Committed with `feat(db): description` or `fix(db): description`
+```
+
+---
+
+## Migration Types Reference
+
+| Type | Operations | Reversibility |
+|------|------------|---------------|
+| **Schema Change** | CREATE, ALTER, DROP | Usually reversible |
+| **Data Migration** | INSERT, UPDATE, DELETE | May not be reversible |
+| **Rollback** | Reverting changes | N/A |
+
+---
+
+## CHANGELOG-DATABASE.md Format
+
+Always update `CHANGELOG-DATABASE.md` with timestamped entries:
+
+```markdown
+## [Date] - Migration Description
+
+### Added
+- Table `example` - Description of what it stores
+
+### Changed
+- Column `users.email` - Added NOT NULL constraint
+
+### Removed
+- Index `idx_old_index` - No longer needed
+```
+
+---
+
+## Comparison with Standard Workflow
+
+| Phase | Standard | Database |
+|-------|----------|----------|
+| **Step 0** | Full clarification | + Migration analysis |
+| **Step 1** | Full validation | + Backup verification |
+| **Step 2** | Full development | + Migration scripts |
+| **Step 3** | Full validation | + Rollback testing |
+| **Always** | CHANGELOG.md | + CHANGELOG-DATABASE.md |
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [workflow-variants.mdc](../workflow-variants.mdc) - Variant router/index
+  - [task-workflow.mdc](../task-workflow.mdc) - Parent workflow rule
+  - [database-schema-enforcement.mdc](../../database/database-schema-enforcement.mdc) - Schema enforcement
+- **Standards:**
+  - [schema.md](../../../standards/database/schema.md) - Database schema standards
+
+---
+
+## How to Use This Rule
+
+**This rule activates when a task involves database changes.**
+
+**Agents should:**
+1. Recognize database trigger keywords
+2. Identify migration type (schema/data/rollback)
+3. Verify backup before proceeding
+4. Write migrations with up/down scripts
+5. Include COMMENT ON statements
+6. Test migration AND rollback locally
+7. Update CHANGELOG-DATABASE.md
+8. Commit with `feat(db):` or `fix(db):` prefix
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

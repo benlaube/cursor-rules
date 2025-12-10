@@ -1,0 +1,290 @@
+---
+description: Error handling standards for consistent, informative, and secure error management. This rule covers error types, error boundaries, logging practices, and user-facing error messages. Agents must use typed errors, implement error boundaries in React, log errors appropriately without sensitive data, and provide helpful user-facing messages.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.py
+type: Error Handling Rule - Error management standards
+applicability: All error handling
+dependencies: []
+relatedCommands: []
+relatedRules: [[logging-standards.mdc], [../security/api-security.mdc]]
+relatedStandards: []
+---
+
+# Error Handling Standards Rule
+
+## When This Rule Applies
+
+This rule **always applies** when:
+- Handling errors in code
+- Creating custom error classes
+- Implementing error boundaries
+- Logging errors
+
+---
+
+## Core Principles
+
+1. **Fail fast** - Detect errors early
+2. **Fail safely** - Don't expose internals
+3. **Fail informatively** - Help debugging
+4. **Recover gracefully** - Handle expected failures
+
+---
+
+## Error Types
+
+### Custom Error Classes
+
+```typescript
+// Base application error
+class AppError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public statusCode: number = 500,
+    public isOperational: boolean = true
+  ) {
+    super(message);
+    this.name = this.constructor.name;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+// Specific error types
+class ValidationError extends AppError {
+  constructor(message: string, public fields?: Record<string, string>) {
+    super(message, 'VALIDATION_ERROR', 400);
+  }
+}
+
+class NotFoundError extends AppError {
+  constructor(resource: string) {
+    super(`${resource} not found`, 'NOT_FOUND', 404);
+  }
+}
+
+class UnauthorizedError extends AppError {
+  constructor(message = 'Authentication required') {
+    super(message, 'UNAUTHORIZED', 401);
+  }
+}
+
+class ForbiddenError extends AppError {
+  constructor(message = 'Access denied') {
+    super(message, 'FORBIDDEN', 403);
+  }
+}
+
+class ConflictError extends AppError {
+  constructor(message: string) {
+    super(message, 'CONFLICT', 409);
+  }
+}
+```
+
+### Using Errors
+
+```typescript
+async function getUser(id: string): Promise<User> {
+  const user = await userRepository.findById(id);
+  
+  if (!user) {
+    throw new NotFoundError('User');
+  }
+  
+  return user;
+}
+
+async function createUser(input: CreateUserInput): Promise<User> {
+  const existing = await userRepository.findByEmail(input.email);
+  
+  if (existing) {
+    throw new ConflictError('Email already registered');
+  }
+  
+  return userRepository.create(input);
+}
+```
+
+---
+
+## Error Handler (Express)
+
+```typescript
+// Global error handler
+function errorHandler(
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  // Log error
+  logger.error('Request error', {
+    error: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+    userId: req.user?.id,
+  });
+  
+  // Handle known errors
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).json({
+      error: {
+        code: err.code,
+        message: err.message,
+        ...(err instanceof ValidationError && { fields: err.fields }),
+      },
+    });
+  }
+  
+  // Handle unknown errors
+  res.status(500).json({
+    error: {
+      code: 'INTERNAL_ERROR',
+      message: 'An unexpected error occurred',
+    },
+  });
+}
+
+app.use(errorHandler);
+```
+
+---
+
+## React Error Boundaries
+
+```tsx
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  state = { hasError: false, error: undefined };
+  
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    logger.error('React error boundary caught error', {
+      error: error.message,
+      componentStack: errorInfo.componentStack,
+    });
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || <ErrorFallback error={this.state.error} />;
+    }
+    return this.props.children;
+  }
+}
+
+// Usage
+<ErrorBoundary fallback={<p>Something went wrong</p>}>
+  <MyComponent />
+</ErrorBoundary>
+```
+
+---
+
+## Async Error Handling
+
+### Try-Catch Wrapper
+
+```typescript
+// Wrapper for async route handlers
+function asyncHandler(fn: RequestHandler): RequestHandler {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+}
+
+// Usage
+app.get('/users/:id', asyncHandler(async (req, res) => {
+  const user = await getUser(req.params.id);
+  res.json(user);
+}));
+```
+
+### Result Pattern
+
+```typescript
+type Result<T, E = Error> = 
+  | { success: true; data: T }
+  | { success: false; error: E };
+
+async function safeGetUser(id: string): Promise<Result<User>> {
+  try {
+    const user = await userRepository.findById(id);
+    if (!user) {
+      return { success: false, error: new NotFoundError('User') };
+    }
+    return { success: true, data: user };
+  } catch (error) {
+    return { success: false, error: error as Error };
+  }
+}
+
+// Usage
+const result = await safeGetUser(id);
+if (!result.success) {
+  // Handle error
+}
+```
+
+---
+
+## Error Messages
+
+### Internal vs External
+
+```typescript
+// Internal: Detailed for debugging
+logger.error('Database query failed', {
+  query: 'SELECT * FROM users WHERE id = $1',
+  params: ['123'],
+  error: error.message,
+  stack: error.stack,
+});
+
+// External: Safe for users
+res.status(500).json({
+  error: {
+    code: 'DATABASE_ERROR',
+    message: 'Unable to complete request. Please try again.',
+  },
+});
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Empty catch blocks
+- ❌ Catching without logging
+- ❌ Exposing stack traces to users
+- ❌ Using strings as error types
+- ❌ Not distinguishing error types
+
+---
+
+## Checklist
+
+- [ ] Custom error classes defined
+- [ ] Global error handler implemented
+- [ ] React error boundaries in place
+- [ ] Async errors properly caught
+- [ ] Errors logged with context
+- [ ] User messages are safe
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [logging-standards.mdc](./logging-standards.mdc) - Error logging
+  - [../security/api-security.mdc](../security/api-security.mdc) - Secure error responses

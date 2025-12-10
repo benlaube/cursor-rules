@@ -1,0 +1,263 @@
+---
+description: Auto-applied rule for deciding when to create a new module vs writing inline code. Helps prevent over-modularization and ensures modules are created only when appropriate.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 06:49:53 EST
+alwaysApply: false
+globs: modules/**
+type: Behavioral Rule - Module creation decision guidance
+applicability: When considering creating a new module, extracting code into a module, working in modules/ directory, or refactoring code for reuse
+dependencies: []
+relatedCommands: []
+relatedRules: [module-discovery-selection.mdc, module-integration-patterns.mdc, dry-principle.mdc]
+relatedStandards: [module-structure.md]
+---
+
+# Module Creation Decision Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Considering creating a new module
+- Extracting code for reuse
+- Refactoring code into a module
+- User requests module creation
+- Code might be reusable across projects
+
+---
+
+## Core Principle
+
+**Create modules only when code will be reused across multiple projects or solves a common pattern.** Not all code should be a module - project-specific business logic should remain inline. Modules should be self-contained, well-documented, and solve common problems.
+
+**Source Standard:** `standards/module-structure.md`
+
+---
+
+## Agent Responsibilities
+
+### 1. Decision Criteria
+
+**Create a module when ALL of these are true:**
+
+#### ✅ Reusability
+- Code will be used in **3+ projects** or contexts
+- Code solves a **common pattern** (not project-specific)
+- Code is **generic enough** to work in different projects
+- Code has **clear boundaries** and responsibilities
+
+#### ✅ Self-Containment
+- Code is **self-contained** with minimal external dependencies
+- Code has **clear input/output** interfaces
+- Code can be **tested independently**
+- Code doesn't depend on project-specific business logic
+
+#### ✅ Common Pattern
+- Code solves a **recurring problem** (logging, error handling, API routes, auth)
+- Code implements a **standard pattern** (not custom business logic)
+- Code is **framework-agnostic** or clearly framework-specific
+- Code follows **established patterns** from existing modules
+
+#### ✅ Documentation Potential
+- Code can be **clearly documented** with examples
+- Code has a **clear purpose** that can be explained
+- Code has **stable API** that won't change frequently
+- Code has **usage patterns** that can be standardized
+
+### 2. Don't Create a Module When
+
+**❌ Project-Specific Business Logic:**
+- Code is specific to one project's domain
+- Code implements unique business rules
+- Code is tightly coupled to project architecture
+- Code won't be reused elsewhere
+
+**❌ Experimental/Unstable Code:**
+- Code is still being developed/refined
+- Code's API is likely to change
+- Code hasn't been tested in multiple contexts
+- Code is a proof-of-concept
+
+**❌ Too Simple:**
+- Code is a single utility function
+- Code is less than 50 lines
+- Code doesn't justify module overhead
+- Code can be a simple utility file instead
+
+**❌ Too Complex:**
+- Code is tightly integrated with project
+- Code has many project-specific dependencies
+- Code requires significant customization per project
+- Code is better as a project feature
+
+### 3. Decision Process
+
+**Follow this decision process:**
+
+1. **Check Existing Modules:**
+   - Search `modules/` directory for similar functionality
+   - Check if existing module can be extended
+   - Verify no module already solves this problem
+
+2. **Evaluate Reusability:**
+   - Will this be used in 3+ projects? → ✅ Create module
+   - Is this project-specific? → ❌ Don't create module
+   - Is this a common pattern? → ✅ Create module
+
+3. **Evaluate Self-Containment:**
+   - Can this be extracted cleanly? → ✅ Create module
+   - Does this depend on project-specific code? → ❌ Don't create module
+   - Can this be tested independently? → ✅ Create module
+
+4. **Evaluate Complexity:**
+   - Is this complex enough to justify a module? → ✅ Create module
+   - Is this too simple? → ❌ Don't create module
+   - Is this too complex/coupled? → ❌ Don't create module
+
+5. **Make Decision:**
+   - If all criteria met → ✅ **Create Module**
+   - If any criteria not met → ❌ **Keep Inline**
+
+### 4. Module Creation Checklist
+
+**Before creating a module, verify:**
+
+- [ ] Code will be reused in 3+ projects
+- [ ] Code solves a common pattern (not project-specific)
+- [ ] Code is self-contained with clear boundaries
+- [ ] Code has minimal external dependencies
+- [ ] Code can be tested independently
+- [ ] Code has clear input/output interfaces
+- [ ] Code can be clearly documented
+- [ ] Code has stable API
+- [ ] No existing module solves this problem
+- [ ] Code is complex enough to justify module overhead
+
+### 5. Examples
+
+#### ✅ Good Module Candidates
+
+**Example 1: Error Handler Module**
+- ✅ Used in multiple projects
+- ✅ Solves common pattern (error handling)
+- ✅ Self-contained (error types, handlers)
+- ✅ Framework-agnostic
+- ✅ Can be clearly documented
+- **Decision:** ✅ Create module
+
+**Example 2: API Route Handler**
+- ✅ Used in multiple Next.js projects
+- ✅ Solves common pattern (API routes)
+- ✅ Self-contained (handler wrapper)
+- ✅ Framework-specific (Next.js) but reusable
+- ✅ Can be clearly documented
+- **Decision:** ✅ Create module
+
+**Example 3: Settings Manager**
+- ✅ Used in multiple projects
+- ✅ Solves common pattern (settings/secrets)
+- ✅ Self-contained (CRUD operations)
+- ✅ Database-agnostic (works with any DB)
+- ✅ Can be clearly documented
+- **Decision:** ✅ Create module
+
+#### ❌ Poor Module Candidates
+
+**Example 1: Project-Specific Business Logic**
+- ❌ Only used in one project
+- ❌ Implements unique business rules
+- ❌ Tightly coupled to project
+- **Decision:** ❌ Keep inline
+
+**Example 2: Simple Utility Function**
+- ❌ Single function (formatDate)
+- ❌ Less than 50 lines
+- ❌ Doesn't justify module overhead
+- **Decision:** ❌ Keep as utility file
+
+**Example 3: Experimental Feature**
+- ❌ Still being developed
+- ❌ API likely to change
+- ❌ Not tested in multiple contexts
+- **Decision:** ❌ Keep inline until stable
+
+### 6. Alternative to Modules
+
+**If code doesn't meet module criteria, consider:**
+
+1. **Utility Files:**
+   - Single file with related functions
+   - Located in `src/utils/` or `lib/utils/`
+   - No separate package.json needed
+
+2. **Shared Code:**
+   - Keep in project's `src/lib/` or `lib/`
+   - Document in project README
+   - Extract to module later if reused
+
+3. **Project Feature:**
+   - Keep as project feature
+   - Document in project docs
+   - Don't force into module structure
+
+---
+
+## Integration with Other Rules
+
+This rule works with:
+
+### `module-discovery-selection.mdc`
+- Check existing modules before creating new one
+
+### `module-integration-patterns.mdc`
+- If creating module, follow integration patterns
+
+### `dry-principle.mdc`
+- Implements DRY by reusing modules instead of duplicating code
+
+---
+
+## Related Files
+
+- **Standards:**
+  - [module-structure.md](../../standards/module-structure.md) - Module structure requirements
+- **Rules:**
+  - [module-discovery-selection.mdc](./module-discovery-selection.mdc) - Check existing modules
+  - [module-integration-patterns.mdc](./module-integration-patterns.mdc) - Integration patterns
+  - [dry-principle.mdc](./dry-principle.mdc) - DRY principle
+- **Modules:**
+  - `modules/*/README.md` - Examples of good modules
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when considering module creation.**
+
+**Agents should:**
+1. **Check existing modules** before creating new one
+2. **Evaluate reusability** (3+ projects, common pattern)
+3. **Evaluate self-containment** (clear boundaries, minimal dependencies)
+4. **Evaluate complexity** (justifies module overhead)
+5. **Make decision** based on all criteria
+6. **Consider alternatives** if module not appropriate
+
+**Decision checklist:**
+- [ ] Code will be reused in 3+ projects
+- [ ] Code solves common pattern (not project-specific)
+- [ ] Code is self-contained
+- [ ] Code can be tested independently
+- [ ] Code can be clearly documented
+- [ ] No existing module solves this
+- [ ] Code justifies module overhead
+
+**If creating module:**
+- [ ] Follow `standards/module-structure.md`
+- [ ] Create complete documentation
+- [ ] Include tests
+- [ ] Document dependencies
+- [ ] Provide usage examples
+
+---
+
+*This rule prevents over-modularization and ensures modules are created only when they provide real value through reuse.*

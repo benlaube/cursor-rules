@@ -1,0 +1,389 @@
+---
+description: Auto-applied rule for managing module dependencies. Handles peer dependencies, module-to-module dependencies, optional dependencies, and dependency conflicts during module integration.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 06:49:53 EST
+alwaysApply: false
+globs: modules/**/package.json
+type: Behavioral Rule - Dependency management guidance
+applicability: When integrating modules, installing dependencies, working with module package.json files, or resolving dependency conflicts
+dependencies: []
+relatedCommands: []
+relatedRules: [module-integration-patterns.mdc, module-discovery-selection.mdc]
+relatedStandards: [module-structure.md]
+---
+
+# Module Dependencies Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Integrating a module into a project
+- Installing module dependencies
+- Resolving dependency conflicts
+- Working with module peer dependencies
+- Handling module-to-module dependencies
+
+---
+
+## Core Principle
+
+**Modules have different types of dependencies that must be managed correctly.** Peer dependencies must be provided by the consuming project, module dependencies must be integrated first, and optional dependencies enhance functionality but aren't required.
+
+**Source Standard:** `standards/module-structure.md`
+
+---
+
+## Agent Responsibilities
+
+### 1. Dependency Types
+
+**Understand the different types of module dependencies:**
+
+#### Type 1: Peer Dependencies
+
+**Definition:** Dependencies that must be provided by the consuming project, not installed by the module itself.
+
+**Examples:**
+- `@supabase/supabase-js` - Provided by project
+- `react` - Provided by project (for React modules)
+- `next` - Provided by project (for Next.js modules)
+
+**Handling:**
+1. Check module's `package.json` for `peerDependencies`
+2. Verify project has these dependencies installed
+3. Install missing peer dependencies in project
+4. Verify versions are compatible
+
+**Example:**
+```json
+// modules/backend-api/package.json
+{
+  "peerDependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "next": "^14.0.0"
+  }
+}
+```
+
+**Action:** Install in project:
+```bash
+npm install @supabase/supabase-js next
+```
+
+#### Type 2: Module Dependencies
+
+**Definition:** Other modules that this module requires to function.
+
+**Examples:**
+- `backend-api` depends on `supabase-core-typescript`
+- `logger-module` might depend on `error-handler` for error categorization
+
+**Handling:**
+1. Check module's README.md for module dependencies
+2. Integrate required modules first
+3. Verify module dependencies are available
+4. Update import paths if needed
+
+**Example:**
+```markdown
+# modules/backend-api/README.md
+## Dependencies
+- `@modules/supabase-core-typescript` (peer dependency) - Unified Supabase utilities
+```
+
+**Action:** Integrate `supabase-core-typescript` before `backend-api`.
+
+#### Type 3: Required Dependencies
+
+**Definition:** NPM packages required for module to function.
+
+**Examples:**
+- `pino` - Required for logger-module
+- `zod` - Required for validation
+- `uuid` - Required for ID generation
+
+**Handling:**
+1. Check module's `package.json` for `dependencies`
+2. Install all required dependencies
+3. Verify versions are compatible
+4. Test module functionality
+
+**Example:**
+```json
+// modules/logger-module/package.json
+{
+  "dependencies": {
+    "pino": "^8.0.0",
+    "zod": "^3.22.0",
+    "uuid": "^9.0.0"
+  }
+}
+```
+
+**Action:** Install dependencies:
+```bash
+npm install pino zod uuid
+```
+
+#### Type 4: Optional Dependencies
+
+**Definition:** Dependencies that enhance functionality but aren't required.
+
+**Examples:**
+- `pino-pretty` - Pretty console output (development only)
+- `@supabase/supabase-js` - Database logging (optional feature)
+
+**Handling:**
+1. Check module's README.md for optional dependencies
+2. Install if feature is needed
+3. Module should work without optional dependencies
+4. Document which features require optional deps
+
+**Example:**
+```markdown
+# modules/logger-module/README.md
+## Optional Dependencies
+- `pino-pretty` - Pretty console output (development)
+- `@supabase/supabase-js` - Database logging (optional)
+```
+
+**Action:** Install if needed:
+```bash
+npm install -D pino-pretty  # Development only
+npm install @supabase/supabase-js  # If using database logging
+```
+
+### 2. Dependency Resolution Process
+
+**Follow this process when integrating modules:**
+
+#### Step 1: Identify All Dependencies
+
+1. **Read Module README.md:**
+   - Check "Dependencies" section
+   - Note required vs optional
+   - Check for module dependencies
+
+2. **Check package.json:**
+   - Review `dependencies` (required)
+   - Review `peerDependencies` (must be provided)
+   - Review `devDependencies` (development only)
+   - Review `optionalDependencies` (optional)
+
+3. **Check Integration Guide:**
+   - Review dependency setup instructions
+   - Check for version requirements
+   - Note any special installation steps
+
+#### Step 2: Check Project Dependencies
+
+1. **List Existing Dependencies:**
+   ```bash
+   npm list --depth=0
+   ```
+
+2. **Check for Conflicts:**
+   - Compare module requirements with existing versions
+   - Identify version conflicts
+   - Note incompatible versions
+
+3. **Check Module Dependencies:**
+   - Verify required modules are integrated
+   - Check module import paths
+   - Verify module versions are compatible
+
+#### Step 3: Resolve Dependencies
+
+1. **Install Missing Dependencies:**
+   ```bash
+   # Install required dependencies
+   npm install {dep1} {dep2}
+   
+   # Install peer dependencies
+   npm install {peerDep1} {peerDep2}
+   
+   # Install optional dependencies (if needed)
+   npm install {optionalDep1}
+   ```
+
+2. **Resolve Version Conflicts:**
+   - Check if versions are compatible
+   - Update to compatible versions if needed
+   - Document any version constraints
+
+3. **Integrate Module Dependencies:**
+   - Integrate required modules first
+   - Verify module dependencies work
+   - Update import paths if needed
+
+#### Step 4: Verify Dependencies
+
+1. **Test Module Functionality:**
+   - Run module tests (if available)
+   - Test basic functionality
+   - Verify no missing dependency errors
+
+2. **Check for Warnings:**
+   - Review npm install warnings
+   - Check for peer dependency warnings
+   - Verify all dependencies resolved
+
+### 3. Common Dependency Issues
+
+#### Issue 1: Missing Peer Dependencies
+
+**Problem:** Module requires peer dependency that's not installed
+
+**Solution:**
+```bash
+# Check module's peerDependencies
+cat modules/{module-name}/package.json | grep peerDependencies
+
+# Install missing peer dependencies
+npm install {missing-peer-dep}
+```
+
+#### Issue 2: Version Conflicts
+
+**Problem:** Module requires different version than project has
+
+**Solution:**
+1. Check if versions are actually incompatible
+2. Update to compatible version if needed
+3. Document version constraint
+4. Consider using module version if it's more recent
+
+#### Issue 3: Module Dependency Not Found
+
+**Problem:** Module depends on another module that's not integrated
+
+**Solution:**
+1. Check module's README.md for module dependencies
+2. Integrate required module first
+3. Verify module dependency is available
+4. Update import paths if needed
+
+#### Issue 4: Circular Dependencies
+
+**Problem:** Module A depends on Module B, which depends on Module A
+
+**Solution:**
+1. Identify circular dependency
+2. Refactor to break circular dependency
+3. Extract shared code to common module
+4. Redesign module boundaries
+
+### 4. Dependency Examples
+
+#### Example 1: Simple Dependencies
+
+**Module:** `logger-module`
+
+**Dependencies:**
+- Required: `pino`, `zod`, `uuid`
+- Optional: `pino-pretty` (dev), `@supabase/supabase-js` (database logging)
+
+**Installation:**
+```bash
+# Required dependencies
+npm install pino zod uuid
+
+# Optional (if needed)
+npm install -D pino-pretty
+npm install @supabase/supabase-js
+```
+
+#### Example 2: Peer Dependencies
+
+**Module:** `backend-api`
+
+**Dependencies:**
+- Required: `zod`
+- Peer: `@supabase/supabase-js`, `next`, `@supabase/ssr`
+- Module: `supabase-core-typescript`
+
+**Installation:**
+```bash
+# First, integrate module dependency
+# (integrate supabase-core-typescript)
+
+# Then install required dependencies
+npm install zod
+
+# Install peer dependencies
+npm install @supabase/supabase-js @supabase/ssr next
+```
+
+#### Example 3: Module Dependencies
+
+**Module:** `backend-api` depends on `supabase-core-typescript`
+
+**Process:**
+1. Integrate `supabase-core-typescript` first
+2. Verify it's available
+3. Then integrate `backend-api`
+4. Update import paths in `backend-api` to reference `supabase-core-typescript`
+
+---
+
+## Integration with Other Rules
+
+This rule works with:
+
+### `module-integration-patterns.mdc`
+- Dependency management is part of integration process
+
+### `module-discovery-selection.mdc`
+- Check dependencies before selecting module
+
+---
+
+## Related Files
+
+- **Standards:**
+  - [module-structure.md](../../standards/module-structure.md) - Module structure requirements
+- **Rules:**
+  - [module-integration-patterns.mdc](./module-integration-patterns.mdc) - Integration process
+  - [module-discovery-selection.mdc](./module-discovery-selection.mdc) - Module selection
+- **Modules:**
+  - `modules/*/package.json` - Dependency definitions
+  - `modules/*/README.md` - Dependency documentation
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when integrating modules or managing dependencies.**
+
+**Agents should:**
+1. **Identify all dependency types** (peer, module, required, optional)
+2. **Check project dependencies** for conflicts
+3. **Resolve dependencies** in correct order
+4. **Install missing dependencies** appropriately
+5. **Verify dependencies** after installation
+6. **Handle common issues** using provided solutions
+
+**Dependency checklist:**
+- [ ] Read module README.md for dependencies
+- [ ] Check module package.json for dependency types
+- [ ] List existing project dependencies
+- [ ] Identify missing dependencies
+- [ ] Check for version conflicts
+- [ ] Install required dependencies
+- [ ] Install peer dependencies
+- [ ] Integrate module dependencies first
+- [ ] Install optional dependencies (if needed)
+- [ ] Verify all dependencies resolved
+- [ ] Test module functionality
+
+**Dependency types:**
+- [ ] Peer dependencies identified and installed
+- [ ] Module dependencies integrated first
+- [ ] Required dependencies installed
+- [ ] Optional dependencies considered
+- [ ] Version conflicts resolved
+
+---
+
+*This rule ensures module dependencies are correctly identified, installed, and resolved, preventing integration issues.*

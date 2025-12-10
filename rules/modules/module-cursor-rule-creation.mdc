@@ -1,0 +1,349 @@
+---
+description: Auto-applied rule for creating module-specific Cursor rules. Guides creation of rules like logger-module.mdc that enforce module usage patterns and best practices.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 06:49:53 EST
+alwaysApply: false
+globs: **/modules/**
+type: Documentation Maintenance Rule - Module-specific rule creation guidance
+applicability: When creating module-specific Cursor rules, when a module needs usage enforcement, or when module has specific patterns that should be automated
+dependencies: []
+relatedCommands: []
+relatedRules: [cursor-rule-creation.mdc, module-discovery-selection.mdc]
+relatedStandards: [process/cursor-rules-standards.md, module-structure.md]
+---
+
+# Module-Specific Cursor Rule Creation Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Creating a module-specific Cursor rule (like `logger-module.mdc`)
+- A module needs usage pattern enforcement
+- A module replaces common patterns that should be automated
+- A module has framework-specific integration requirements
+- A module has security or performance considerations
+
+---
+
+## Core Principle
+
+**Module-specific Cursor rules enforce correct module usage and prevent common mistakes.** These rules automate best practices, ensure consistency, and help AI agents use modules correctly.
+
+**Source Standard:** `standards/process/cursor-rules-standards.md` and `standards/module-structure.md`
+
+---
+
+## Agent Responsibilities
+
+### 1. When to Create Module-Specific Rule
+
+**Create a module-specific rule when:**
+
+#### ✅ Module Replaces Common Patterns
+
+**Example:** `logger-module` replaces `console.log`
+- Rule enforces using logger instead of console.log
+- Prevents ad-hoc logging
+- Ensures structured logging
+
+**Decision:** ✅ Create rule
+
+#### ✅ Module Has Framework-Specific Requirements
+
+**Example:** `backend-api` has Next.js-specific patterns
+- Rule enforces Next.js App Router usage
+- Ensures proper route handler structure
+- Validates Supabase SSR integration
+
+**Decision:** ✅ Create rule
+
+#### ✅ Module Has Security Considerations
+
+**Example:** `settings-manager` handles secrets
+- Rule enforces encryption usage
+- Prevents storing secrets in plain text
+- Ensures proper secret handling
+
+**Decision:** ✅ Create rule
+
+#### ✅ Module Has Performance Patterns
+
+**Example:** `logger-module` has batching requirements
+- Rule enforces batching for database logs
+- Prevents performance issues
+- Ensures proper configuration
+
+**Decision:** ✅ Create rule
+
+#### ❌ Don't Create Rule When
+
+- Module is simple utility (no enforcement needed)
+- Module has no specific usage patterns
+- Module usage is obvious from documentation
+- Module is rarely used
+
+### 2. Rule Location
+
+**Place module-specific rules in:**
+
+```
+modules/{module-name}/.cursor/rules/{module-name}.mdc
+```
+
+**Example:**
+```
+modules/logger-module/.cursor/rules/logger-module.mdc
+```
+
+**Why:**
+- Keeps rule with module
+- Easy to find and maintain
+- Module-specific rules stay with module code
+
+### 3. Rule Structure
+
+**Follow this structure for module-specific rules:**
+
+```markdown
+---
+description: Auto-applied rule for using {module-name} instead of {common-pattern}. {Brief description of what rule enforces}.
+version: 1.0.0
+created: MM-DD-YYYY
+lastUpdated: MM-DD-YYYY HH:MM:SS EST
+alwaysApply: false
+globs: **/*.{ts,tsx,js,jsx}  # Or appropriate file patterns
+type: Behavioral Rule - {Module} usage enforcement
+applicability: When working with {file types} in projects using {module-name}
+dependencies: []
+relatedCommands: []
+relatedRules: [module-discovery-selection.mdc, module-integration-patterns.mdc]
+relatedStandards: [module-structure.md]
+---
+
+# {Module Name} Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Working with {file types} in a project that uses `{module-name}`
+- {Specific trigger conditions}
+- {Other trigger conditions}
+
+---
+
+## Core Principle
+
+**{Why this module should be used and what it replaces}**
+
+---
+
+## Agent Responsibilities
+
+### 1. {Module} Setup
+
+**Always use {module-name} for {purpose}:**
+
+```typescript
+// ✅ CORRECT
+{Correct usage example}
+
+// ❌ WRONG
+{Incorrect/old pattern}
+```
+
+### 2. {Specific Pattern}
+
+**{How to use module for specific pattern}:**
+
+```typescript
+{Example code}
+```
+
+### 3. {Integration Pattern}
+
+**{How to integrate module}:**
+
+```typescript
+{Integration example}
+```
+
+---
+
+## Integration Patterns
+
+{Module-specific integration patterns}
+
+---
+
+## Related Files
+
+- **Module Documentation:**
+  - [README.md](../README.md) - Main documentation
+  - [docs/usage-examples.md](../docs/usage-examples.md) - Code examples
+  - [INTEGRATION_GUIDE.md](../INTEGRATION_GUIDE.md) - Integration guide
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when working with {file types} in projects using {module-name}.**
+
+**Agents should:**
+1. Always use {module-name} for {purpose}
+2. {Specific guidance}
+3. {More guidance}
+
+**Quick checklist:**
+- [ ] {Checklist item 1}
+- [ ] {Checklist item 2}
+- [ ] {Checklist item 3}
+```
+
+### 4. Rule Content Guidelines
+
+**Include in module-specific rules:**
+
+1. **When Rule Applies:**
+   - Clear trigger conditions
+   - File patterns (globs)
+   - Project context
+
+2. **Core Principle:**
+   - Why module should be used
+   - What it replaces
+   - Benefits of using module
+
+3. **Agent Responsibilities:**
+   - Setup instructions
+   - Usage patterns
+   - Integration patterns
+   - Common mistakes to avoid
+
+4. **Examples:**
+   - Correct vs incorrect usage
+   - Integration examples
+   - Framework-specific examples
+
+5. **Related Files:**
+   - Module README.md
+   - Integration guide
+   - Usage examples
+   - Configuration docs
+
+### 5. Example: Logger Module Rule
+
+**Reference:** `modules/logger-module/.cursor/rules/logger-module.mdc`
+
+**Key Features:**
+- Enforces using logger instead of console.log
+- Provides setup examples
+- Shows integration patterns
+- Includes framework-specific examples (Express, Next.js)
+- Lists common mistakes
+
+**Structure:**
+- When rule applies (TypeScript/JavaScript files)
+- Core principle (structured logging)
+- Agent responsibilities (setup, usage, integration)
+- Examples (correct vs incorrect)
+- Integration patterns (frameworks)
+- Related files (module docs)
+
+### 6. Creating New Module Rule
+
+**Process for creating module-specific rule:**
+
+1. **Evaluate Need:**
+   - Does module need usage enforcement?
+   - Does module replace common patterns?
+   - Does module have specific requirements?
+
+2. **Review Module Documentation:**
+   - Read module README.md
+   - Review usage examples
+   - Check integration guide
+   - Note common patterns
+
+3. **Create Rule File:**
+   - Location: `modules/{module-name}/.cursor/rules/{module-name}.mdc`
+   - Follow rule structure template
+   - Include all required sections
+
+4. **Add Examples:**
+   - Correct usage examples
+   - Incorrect usage examples
+   - Integration examples
+   - Framework-specific examples
+
+5. **Reference Module Docs:**
+   - Link to README.md
+   - Link to integration guide
+   - Link to usage examples
+
+6. **Test Rule:**
+   - Verify rule applies correctly
+   - Test with example code
+   - Ensure rule is helpful
+
+---
+
+## Integration with Other Rules
+
+This rule works with:
+
+### `cursor-rule-creation.mdc`
+- Follows general rule creation standards
+- Uses same structure and metadata
+
+### `module-discovery-selection.mdc`
+- Module rules help agents discover and use modules correctly
+
+---
+
+## Related Files
+
+- **Standards:**
+  - [process/cursor-rules-standards.md](../../standards/process/cursor-rules-standards.md) - Rule creation standards
+  - [module-structure.md](../../standards/module-structure.md) - Module structure
+- **Rules:**
+  - [cursor-rule-creation.mdc](./cursor-rule-creation.mdc) - General rule creation
+  - [module-discovery-selection.mdc](./module-discovery-selection.mdc) - Module selection
+- **Examples:**
+  - `modules/logger-module/.cursor/rules/logger-module.mdc` - Example module rule
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when creating module-specific Cursor rules.**
+
+**Agents should:**
+1. **Evaluate need** for module-specific rule
+2. **Review module documentation** to understand patterns
+3. **Create rule file** in module's `.cursor/rules/` directory
+4. **Follow rule structure** template
+5. **Include examples** (correct vs incorrect)
+6. **Reference module docs** in rule
+7. **Test rule** to ensure it works
+
+**Rule creation checklist:**
+- [ ] Module needs usage enforcement
+- [ ] Module replaces common patterns
+- [ ] Rule location is correct (`modules/{name}/.cursor/rules/`)
+- [ ] Rule follows structure template
+- [ ] Rule includes examples
+- [ ] Rule references module docs
+- [ ] Rule is tested and works
+
+**Rule content:**
+- [ ] Clear trigger conditions
+- [ ] Core principle explained
+- [ ] Agent responsibilities defined
+- [ ] Examples included (correct vs incorrect)
+- [ ] Integration patterns documented
+- [ ] Related files referenced
+
+---
+
+*This rule ensures module-specific Cursor rules are created correctly, enforcing proper module usage and preventing common mistakes.*

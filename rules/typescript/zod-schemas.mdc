@@ -1,0 +1,240 @@
+---
+description: Zod schema standards for runtime validation and type inference. This rule covers schema definition, validation patterns, error handling, and type inference. Agents must use Zod for API input validation, define reusable schemas, handle validation errors properly, and leverage type inference.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/schemas/**,**/validators/**,**/*.schema.ts
+type: Tech Stack Rule - Zod validation patterns
+applicability: Input validation with Zod
+dependencies: []
+relatedCommands: []
+relatedRules: [[typescript-config.mdc], [../security/input-validation.mdc], [../api/api-routes.mdc]]
+relatedStandards: []
+---
+
+# Zod Schema Standards Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Defining validation schemas
+- Validating API inputs
+- Inferring types from schemas
+- Handling validation errors
+
+---
+
+## Schema Definition
+
+### Basic Schemas
+
+```typescript
+import { z } from 'zod';
+
+// User schema
+export const userSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string().email(),
+  name: z.string().min(1).max(100),
+  role: z.enum(['user', 'admin', 'moderator']),
+  createdAt: z.date(),
+});
+
+// Type inference
+export type User = z.infer<typeof userSchema>;
+
+// Input schemas (without auto-generated fields)
+export const createUserSchema = userSchema.omit({ id: true, createdAt: true });
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+
+export const updateUserSchema = createUserSchema.partial();
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+```
+
+### Complex Schemas
+
+```typescript
+// Nested objects
+const addressSchema = z.object({
+  street: z.string(),
+  city: z.string(),
+  country: z.string(),
+  postalCode: z.string(),
+});
+
+const profileSchema = z.object({
+  user: userSchema,
+  address: addressSchema.optional(),
+  preferences: z.record(z.string(), z.unknown()),
+});
+
+// Arrays
+const userListSchema = z.array(userSchema);
+
+// Unions
+const resultSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('success'), data: userSchema }),
+  z.object({ type: z.literal('error'), message: z.string() }),
+]);
+```
+
+---
+
+## Validation Patterns
+
+### Safe Parsing
+
+```typescript
+// Safe parse (returns result object)
+function validateUser(input: unknown) {
+  const result = userSchema.safeParse(input);
+  
+  if (!result.success) {
+    return { error: formatZodError(result.error) };
+  }
+  
+  return { data: result.data };
+}
+
+// Format Zod errors
+function formatZodError(error: z.ZodError) {
+  return {
+    code: 'VALIDATION_ERROR',
+    issues: error.issues.map(issue => ({
+      path: issue.path.join('.'),
+      message: issue.message,
+    })),
+  };
+}
+```
+
+### API Validation
+
+```typescript
+// Express middleware
+function validateBody<T extends z.ZodSchema>(schema: T) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.body);
+    
+    if (!result.success) {
+      return res.status(400).json(formatZodError(result.error));
+    }
+    
+    req.body = result.data;
+    next();
+  };
+}
+
+// Usage
+app.post('/users', validateBody(createUserSchema), async (req, res) => {
+  const user = await createUser(req.body); // Type-safe
+  res.json(user);
+});
+```
+
+---
+
+## Custom Validations
+
+```typescript
+// Custom refinement
+const passwordSchema = z.string()
+  .min(12, 'Password must be at least 12 characters')
+  .refine(
+    (val) => /[A-Z]/.test(val),
+    'Password must contain uppercase letter'
+  )
+  .refine(
+    (val) => /[0-9]/.test(val),
+    'Password must contain a number'
+  );
+
+// Transform
+const dateStringSchema = z.string()
+  .transform((val) => new Date(val))
+  .refine((date) => !isNaN(date.getTime()), 'Invalid date');
+
+// Preprocess
+const numberFromString = z.preprocess(
+  (val) => (typeof val === 'string' ? parseInt(val, 10) : val),
+  z.number()
+);
+```
+
+---
+
+## Schema Composition
+
+```typescript
+// Extend
+const adminUserSchema = userSchema.extend({
+  permissions: z.array(z.string()),
+  lastLogin: z.date(),
+});
+
+// Merge
+const fullProfileSchema = userSchema.merge(addressSchema);
+
+// Pick/Omit
+const userCredentialsSchema = userSchema.pick({ email: true });
+const publicUserSchema = userSchema.omit({ password: true });
+
+// Partial/Required
+const partialUserSchema = userSchema.partial();
+const requiredUserSchema = userSchema.required();
+```
+
+---
+
+## Query Parameter Validation
+
+```typescript
+const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  sort: z.enum(['asc', 'desc']).default('desc'),
+});
+
+const filterSchema = z.object({
+  search: z.string().optional(),
+  status: z.enum(['active', 'inactive']).optional(),
+  startDate: z.coerce.date().optional(),
+});
+
+app.get('/users', (req, res) => {
+  const pagination = paginationSchema.parse(req.query);
+  const filters = filterSchema.parse(req.query);
+  // ...
+});
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Using parse() without error handling
+- ❌ Duplicating schemas instead of composing
+- ❌ Not using type inference
+- ❌ Overly complex nested refinements
+- ❌ Validation logic in schemas (use services)
+
+---
+
+## Checklist
+
+- [ ] Schemas defined for all inputs
+- [ ] Type inference used
+- [ ] Safe parsing with error handling
+- [ ] Reusable schema composition
+- [ ] Custom errors are helpful
+- [ ] Query params validated
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [typescript-config.mdc](./typescript-config.mdc) - TypeScript setup
+  - [../security/input-validation.mdc](../security/input-validation.mdc) - Validation patterns
+  - [../api/api-routes.mdc](../api/api-routes.mdc) - API validation

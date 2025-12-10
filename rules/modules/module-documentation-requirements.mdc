@@ -1,0 +1,349 @@
+---
+description: Auto-applied rule for verifying module documentation completeness before use. Ensures modules have required documentation (README.md, INTEGRATION_GUIDE.md, package.json, etc.) and meet quality standards.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 06:49:53 EST
+alwaysApply: false
+globs: modules/**/README.md
+type: Documentation Maintenance Rule - Module documentation verification
+applicability: When selecting a module for use, before integrating a module, or when reviewing module documentation
+dependencies: []
+relatedCommands: []
+relatedRules: [module-discovery-selection.mdc, module-integration-patterns.mdc, readme-standards.mdc]
+relatedStandards: [module-structure.md, project-planning/documentation-management.md]
+---
+
+# Module Documentation Requirements Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Selecting a module for use
+- Before integrating a module into a project
+- Reviewing module documentation quality
+- Creating or updating module documentation
+- Verifying module completeness
+
+---
+
+## Core Principle
+
+**Modules must have complete, clear documentation before use.** Incomplete documentation leads to integration issues, incorrect usage, and maintenance problems. All modules must meet minimum documentation requirements defined in `standards/module-structure.md`.
+
+**Source Standard:** `standards/module-structure.md` and `standards/project-planning/documentation-management.md`
+
+---
+
+## Agent Responsibilities
+
+### 1. Required Documentation Checklist
+
+**Before using a module, verify it has all required documentation:**
+
+#### ✅ README.md (Required)
+
+**Must contain:**
+- **Title & Description:** Clear one-sentence description of what the module does
+- **Dependencies:** Complete list of all dependencies (npm packages, peer dependencies)
+- **Installation:** Step-by-step installation instructions
+- **Usage Example:** Copy-pasteable code example showing basic usage
+- **API Reference:** Documentation of public API (functions, classes, types)
+- **Configuration:** Configuration options and environment variables
+- **Features:** List of key features with checkmarks (✅)
+
+**Quality Checks:**
+- [ ] Title clearly describes module purpose
+- [ ] Description is one sentence, clear and concise
+- [ ] Dependencies list is complete and accurate
+- [ ] Installation steps are clear and copy-pasteable
+- [ ] Usage example works without modification
+- [ ] API reference is complete
+- [ ] Configuration options are documented
+
+**Reference:** See `readme-standards.mdc` Section 3.2 for Module README structure.
+
+#### ✅ package.json (Required)
+
+**Must contain:**
+- **name:** Module name (kebab-case)
+- **version:** Semantic version
+- **description:** Brief description
+- **dependencies:** All required dependencies
+- **peerDependencies:** Dependencies that must be provided by consuming project
+- **devDependencies:** Development-only dependencies
+
+**Quality Checks:**
+- [ ] All dependencies are listed
+- [ ] Peer dependencies are clearly marked
+- [ ] Version ranges are appropriate
+- [ ] No missing or incorrect dependencies
+
+#### ✅ INTEGRATION_GUIDE.md (Recommended for Complex Modules)
+
+**Should contain:**
+- **Step-by-step integration:** Detailed integration process
+- **Configuration requirements:** All configuration needed
+- **Dependencies setup:** How to install and configure dependencies
+- **Database setup:** Migration instructions (if applicable)
+- **Troubleshooting:** Common issues and solutions
+- **Examples:** Multiple usage examples
+
+**When Required:**
+- Module has complex setup process
+- Module requires database migrations
+- Module has multiple integration patterns
+- Module has framework-specific requirements
+
+**Quality Checks:**
+- [ ] Integration steps are clear and sequential
+- [ ] Configuration is fully documented
+- [ ] Troubleshooting covers common issues
+- [ ] Examples are relevant and working
+
+#### ✅ .env.example (Required if Module Uses Environment Variables)
+
+**Must contain:**
+- All environment variables the module uses
+- Variable descriptions/comments
+- Example values (non-sensitive)
+- Required vs optional indicators
+
+**Quality Checks:**
+- [ ] All environment variables are listed
+- [ ] Descriptions explain purpose
+- [ ] Required variables are marked
+- [ ] Example values are safe to commit
+
+#### ✅ Migration Files (Required if Module Requires Database Changes)
+
+**Must contain:**
+- SQL migration files in `migrations/` directory
+- Schema definitions with comments
+- RLS policies (if applicable)
+- Migration versioning
+
+**Quality Checks:**
+- [ ] Migrations are in correct directory
+- [ ] SQL has comments on tables/columns
+- [ ] Migrations are idempotent (can run multiple times)
+- [ ] RLS policies are included (if needed)
+
+### 2. Documentation Quality Standards
+
+**Verify documentation meets quality standards:**
+
+#### Clarity
+- [ ] Documentation is easy to understand
+- [ ] Technical terms are explained
+- [ ] Examples are clear and relevant
+- [ ] No ambiguous instructions
+
+#### Completeness
+- [ ] All features are documented
+- [ ] All configuration options are explained
+- [ ] All API methods are documented
+- [ ] Error handling is explained
+
+#### Accuracy
+- [ ] Code examples work as written
+- [ ] Version numbers are correct
+- [ ] Dependencies are accurate
+- [ ] Configuration examples are valid
+
+#### Usability
+- [ ] Quick start guide is available
+- [ ] Examples are copy-pasteable
+- [ ] Common use cases are covered
+- [ ] Troubleshooting is helpful
+
+### 3. Documentation Verification Process
+
+**Before using a module, follow this verification process:**
+
+1. **Check Required Files:**
+   ```bash
+   # Verify README.md exists
+   test -f modules/{module-name}/README.md
+   
+   # Verify package.json exists
+   test -f modules/{module-name}/package.json
+   
+   # Check for INTEGRATION_GUIDE.md (if complex)
+   test -f modules/{module-name}/INTEGRATION_GUIDE.md
+   
+   # Check for .env.example (if uses env vars)
+   test -f modules/{module-name}/.env.example
+   ```
+
+2. **Read README.md:**
+   - Verify title and description are clear
+   - Check dependencies list is complete
+   - Review installation instructions
+   - Test usage example
+
+3. **Review package.json:**
+   - Verify all dependencies are listed
+   - Check peer dependencies
+   - Verify version information
+
+4. **Check Integration Guide (if exists):**
+   - Review integration steps
+   - Verify configuration requirements
+   - Check troubleshooting section
+
+5. **Verify Examples:**
+   - Test that examples work
+   - Verify examples are relevant
+   - Check for missing context
+
+### 4. Documentation Gaps
+
+**If documentation is incomplete:**
+
+1. **Before Using Module:**
+   - ⚠️ **Warn user** about missing documentation
+   - List missing documentation items
+   - Suggest completing documentation before use
+   - Offer to help create missing documentation
+
+2. **If User Proceeds:**
+   - Document assumptions made
+   - Note missing information
+   - Create temporary documentation
+   - Update module documentation later
+
+3. **If Creating Module Documentation:**
+   - Follow `readme-standards.mdc` for README structure
+   - Reference `standards/module-structure.md` for requirements
+   - Include all required sections
+   - Test all examples
+
+### 5. Module Documentation Examples
+
+#### Good Module README
+
+```markdown
+# Logger Module
+
+> A comprehensive, universal logging system with multi-dimensional categorization.
+
+## Dependencies
+
+- `pino` - Logging library
+- `zod` - Schema validation
+- `uuid` - ID generation
+
+## Installation
+
+```bash
+npm install pino zod uuid
+```
+
+## Usage
+
+```typescript
+import { setupLogger } from './modules/logger-module';
+
+const logger = setupLogger('my-app', {
+  env: 'development',
+  serviceName: 'api',
+});
+
+logger.info('Application started');
+```
+
+## Configuration
+
+See `.env.example` for all configuration options.
+```
+
+#### Poor Module README
+
+```markdown
+# Logger
+
+Logging module.
+
+## Install
+
+npm install
+
+## Use
+
+import logger from './logger';
+logger.log('test');
+```
+
+**Issues:**
+- No description
+- Missing dependencies
+- Unclear installation
+- Incomplete usage example
+- No configuration documentation
+
+---
+
+## Integration with Other Rules
+
+This rule works with:
+
+### `module-discovery-selection.mdc`
+- Verify documentation before selecting module
+
+### `module-integration-patterns.mdc`
+- Documentation quality affects integration success
+
+### `readme-standards.mdc`
+- Module READMEs must follow README standards
+
+---
+
+## Related Files
+
+- **Standards:**
+  - [module-structure.md](../../standards/module-structure.md) - Module structure and documentation requirements
+  - [project-planning/documentation-management.md](../../standards/project-planning/documentation-management.md) - Documentation standards
+- **Rules:**
+  - [module-discovery-selection.mdc](./module-discovery-selection.mdc) - Module selection
+  - [module-integration-patterns.mdc](./module-integration-patterns.mdc) - Integration process
+  - [readme-standards.mdc](./readme-standards.mdc) - README structure standards
+- **Modules:**
+  - `modules/*/README.md` - Module documentation examples
+  - `modules/*/INTEGRATION_GUIDE.md` - Integration guide examples
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when selecting or integrating modules.**
+
+**Agents should:**
+1. **Verify required documentation** exists before using module
+2. **Check documentation quality** against standards
+3. **Test examples** to ensure they work
+4. **Warn about gaps** if documentation is incomplete
+5. **Help create documentation** if missing
+6. **Follow documentation standards** when creating module docs
+
+**Verification checklist:**
+- [ ] README.md exists and is complete
+- [ ] package.json exists with all dependencies
+- [ ] INTEGRATION_GUIDE.md exists (if complex module)
+- [ ] .env.example exists (if uses env vars)
+- [ ] Migration files exist (if requires DB changes)
+- [ ] Documentation is clear and accurate
+- [ ] Examples are copy-pasteable and work
+- [ ] Configuration is fully documented
+
+**Quality checks:**
+- [ ] Title and description are clear
+- [ ] Dependencies are complete
+- [ ] Installation steps work
+- [ ] Usage examples are relevant
+- [ ] API reference is complete
+- [ ] Configuration is documented
+- [ ] Troubleshooting is helpful
+
+---
+
+*This rule ensures modules have complete, high-quality documentation before use, reducing integration issues and improving maintainability.*

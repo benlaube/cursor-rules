@@ -1,0 +1,149 @@
+---
+description: Router rule that directs agents to the appropriate workflow variant based on task characteristics. Variants include Emergency/Hotfix, Documentation-Only, Database Migration, and Security Patch.
+version: 2.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 09:37:22 EST
+alwaysApply: false
+globs:
+type: Workflow Integration Rule - Routes to appropriate workflow variant
+applicability: When selecting or executing a workflow variant from task-workflow.mdc
+dependencies: []
+relatedCommands: [[audit-security.md](../commands/audit-security.md), [project-audit.md](../commands/project-audit.md)]
+relatedRules: [[task-workflow.mdc](./task-workflow.mdc), [variants/variant-emergency.mdc](./variants/variant-emergency.mdc), [variants/variant-documentation.mdc](./variants/variant-documentation.mdc), [variants/variant-database.mdc](./variants/variant-database.mdc), [variants/variant-security.mdc](./variants/variant-security.mdc)]
+relatedStandards: [[database/schema.md](../../standards/database/schema.md), [security/access-control.md](../../standards/security/access-control.md)]
+---
+
+# Workflow Variants (Router)
+
+This rule routes agents to the appropriate scoped workflow variant:
+
+- **Emergency/Hotfix:** [variant-emergency.mdc](./variants/variant-emergency.mdc)
+- **Documentation-Only:** [variant-documentation.mdc](./variants/variant-documentation.mdc)
+- **Database Migration:** [variant-database.mdc](./variants/variant-database.mdc)
+- **Security Patch:** [variant-security.mdc](./variants/variant-security.mdc)
+
+Use this router to select the correct variant based on task characteristics, then follow that variant's specific guidance.
+
+> **Parent Rule:** See `task-workflow.mdc` for the complete development lifecycle workflow.
+
+---
+
+## Variant Selection Decision Tree
+
+```mermaid
+flowchart TD
+    Start([Task Identified]) --> Q1{Time-critical?<br/>Production incident?}
+    Q1 -->|Yes| Emergency[Emergency/Hotfix<br/>variant-emergency.mdc]
+    Q1 -->|No| Q2{Code changes?}
+    Q2 -->|No - Docs only| Documentation[Documentation-Only<br/>variant-documentation.mdc]
+    Q2 -->|Yes| Q3{Database schema<br/>changes?}
+    Q3 -->|Yes| Database[Database Migration<br/>variant-database.mdc]
+    Q3 -->|No| Q4{Security-related?}
+    Q4 -->|Yes| Security[Security Patch<br/>variant-security.mdc]
+    Q4 -->|No| Standard[Standard<br/>Workflow<br/>task-workflow.mdc]
+```
+
+---
+
+## Quick Selection Guide
+
+### Use `variant-emergency.mdc` when:
+- Production incidents affecting users
+- Time-critical bug fixes
+- Urgent security patches
+- System downtime situations
+- **Keywords:** "urgent", "production down", "emergency", "hotfix", "critical", "ASAP"
+
+### Use `variant-documentation.mdc` when:
+- README updates
+- Standards documentation changes
+- Guide creation or updates
+- No code logic changes
+- **Keywords:** "update docs", "fix README", "documentation", "typo fix"
+
+### Use `variant-database.mdc` when:
+- New table creation
+- Column additions/modifications
+- Data migrations
+- Schema refactoring
+- RLS policy changes
+- **Keywords:** "add column", "create table", "migration", "schema change", "alter table"
+
+### Use `variant-security.mdc` when:
+- Security vulnerability fixes
+- Access control changes
+- Authentication/authorization updates
+- Secrets rotation
+- **Keywords:** "security", "vulnerability", "CVE", "access control", "auth", "RLS"
+
+### Use Standard Workflow (no variant) when:
+- Regular feature development
+- Non-urgent bug fixes
+- Refactoring
+- General improvements
+
+---
+
+## Variant Summary Table
+
+| Variant | Step 0 | Step 1 | Step 2 | Step 3 | Special |
+|---------|--------|--------|--------|--------|---------|
+| **Emergency** | Streamlined | Minimal | Focused | Critical only | Post-deploy validation |
+| **Documentation** | Doc scope | Skip build/tests | Standards compliance | Link/format check | Version metadata |
+| **Database** | Migration analysis | Backup verify | Migration scripts | Rollback test | CHANGELOG-DATABASE.md |
+| **Security** | Severity analysis | Enhanced scanning | Security focus | Mandatory audit | Post-deploy monitoring |
+| **Standard** | Full clarification | Full validation | Full development | Full validation | Normal process |
+
+---
+
+## How to Use This Rule
+
+**This rule is referenced from `task-workflow.mdc` Section 0.5 (Select Workflow Variant).**
+
+**Agents should:**
+1. Identify task characteristics during Step 0
+2. Use the Decision Tree to select the appropriate variant
+3. Navigate to the specific variant rule
+4. Follow that variant's step-by-step modifications
+5. Complete the variant-specific checklist
+
+**Quick Decision:**
+```
+Is it time-critical? → variant-emergency.mdc
+No code changes? → variant-documentation.mdc
+Database schema? → variant-database.mdc
+Security-related? → variant-security.mdc
+Otherwise → Standard Workflow (task-workflow.mdc)
+```
+
+---
+
+## Related Files
+
+- **Variant Rules:**
+  - [variant-emergency.mdc](./variants/variant-emergency.mdc) - Emergency/Hotfix workflow
+  - [variant-documentation.mdc](./variants/variant-documentation.mdc) - Documentation-only workflow
+  - [variant-database.mdc](./variants/variant-database.mdc) - Database migration workflow
+  - [variant-security.mdc](./variants/variant-security.mdc) - Security patch workflow
+- **Parent Rules:**
+  - [task-workflow.mdc](./task-workflow.mdc) - Complete development lifecycle
+- **Commands:**
+  - [audit-security.md](../commands/audit-security.md) - Security audit command
+  - [project-audit.md](../commands/project-audit.md) - Project structure audit
+- **Checklists:**
+  - [requirements_clarification_checklist_v1_0.md](../../standards/process/checklists/requirements_clarification_checklist_v1_0.md) - Step 0 checklist
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

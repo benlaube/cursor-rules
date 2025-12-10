@@ -1,0 +1,545 @@
+---
+description: Versioning standards for documentation files (.md), including version formats, status lifecycle, superseded/deprecated metadata, and INDEX.md maintenance. This rule ensures consistent version tracking and status management across all documentation.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 12:00:00 EST
+alwaysApply: false
+globs: **/*.md
+type: Documentation Standard Rule - Defines versioning and status for documentation files
+applicability: When creating or modifying .md documentation files
+dependencies: []
+relatedCommands: []
+relatedRules:
+  - documentation-metadata.mdc
+  - documentation-dependency-tracking.mdc
+  - ../core/version-management.mdc
+relatedStandards:
+  - project-planning/documentation-management.md
+---
+
+# Documentation Versioning Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Creating new documentation files (`.md`)
+- Modifying existing documentation
+- Changing document status (Draft → Active → Deprecated, etc.)
+- Updating INDEX.md with document changes
+- Archiving or superseding documents
+
+---
+
+## Core Principle
+
+**All documentation files must have consistent versioning and clear status tracking.** This enables:
+- Understanding document lifecycle stage
+- Tracking when documents were superseded or deprecated
+- Finding replacement documents easily
+- Maintaining accurate INDEX.md records
+
+**Reference:** For general version management rules (rules, commands, standards, checklists), see `.cursor/rules/core/version-management.mdc`. This rule extends those concepts specifically for documentation files.
+
+---
+
+## Version Format for Documentation
+
+### Standard Format
+
+**Documentation Files:** `X.Y` (two-part versioning)
+
+**When to Increment:**
+- **Major (X):** Complete rewrite, structural reorganization, or breaking changes
+- **Minor (Y):** New sections, significant updates, or meaningful additions
+
+**Examples:**
+- Initial creation: `1.0`
+- Added new section: `1.1`
+- Major rewrite: `2.0`
+- Clarifications: `1.2`
+
+### Version in Metadata (NOT Filenames)
+
+**CORRECT:**
+```markdown
+# API Reference Guide
+
+## Metadata
+- **Version:** 1.2
+- **Last Updated:** 12-09-2025 12:00:00 EST
+```
+
+**INCORRECT:**
+```markdown
+# File named: api_reference_v1_2.md  ❌ NO VERSION IN FILENAME
+```
+
+**Why:** Version in filenames causes broken links when version changes. Keep version in metadata only.
+
+---
+
+## Document Status Lifecycle
+
+### Complete Status Definitions
+
+| Status | Meaning | When to Use | Typical Duration |
+|--------|---------|-------------|------------------|
+| **Planning** | Document concept is being scoped and planned | Initial idea phase, gathering requirements | Days to weeks |
+| **In Roadmap** | Document is planned for future creation | Scheduled but not started | Weeks to months |
+| **Draft** | Document is being actively written | Content incomplete, work in progress | Days to weeks |
+| **In Review** | Document complete, awaiting review/approval | Ready for feedback, pending approval | Days |
+| **Active** | Current, maintained, and in use | Primary documentation for topic | Months to years |
+| **In Progress** | Active document being implemented | Document contents being built into application | Weeks to months |
+| **Deprecated** | Still valid but use alternative | Newer approach exists, grace period | 30-90 days |
+| **Superseded** | Replaced by newer version | New document completely replaces this one | 30-90 days |
+| **Archived** | Historical reference only | No longer relevant, kept for history | Permanent |
+
+### Detailed Status Descriptions
+
+#### Planning
+**Definition:** The document concept is being planned. Scope, audience, and content outline are being determined.
+
+**Use When:**
+- Initial concept phase for a new document
+- Gathering requirements for what the document should cover
+- Deciding if a document is needed
+
+**Metadata:**
+```markdown
+- **Status:** Planning
+- **Planned By:** [Name/Team]
+- **Target Start Date:** [Date]
+```
+
+#### In Roadmap
+**Definition:** The document is officially scheduled for creation but work has not yet begun.
+
+**Use When:**
+- Document approved for creation
+- Scheduled in project roadmap
+- Waiting for other work to complete first
+
+**Metadata:**
+```markdown
+- **Status:** In Roadmap
+- **Scheduled For:** Q1 2026
+- **Blocked By:** [Optional - what needs to complete first]
+```
+
+#### Draft
+**Definition:** The document is being actively written. Content may be incomplete or subject to change.
+
+**Use When:**
+- Actively writing content
+- Document structure is defined but content is partial
+- Not ready for use
+
+**Metadata:**
+```markdown
+- **Status:** Draft
+- **Draft Started:** [Date]
+- **Target Completion:** [Date]
+```
+
+#### In Review
+**Definition:** The document is complete and awaiting review or approval before becoming active.
+
+**Use When:**
+- Writing is complete
+- Pending technical review
+- Pending stakeholder approval
+
+**Metadata:**
+```markdown
+- **Status:** In Review
+- **Review Requested:** [Date]
+- **Reviewer:** [Name/Team]
+```
+
+#### Active
+**Definition:** The document is current, maintained, and the authoritative source for its topic.
+
+**Use When:**
+- Document is complete and approved
+- Being actively maintained
+- Should be used as reference
+
+**Metadata:**
+```markdown
+- **Status:** Active
+- **Approved Date:** [Date]
+- **Owner:** [Name/Team]
+```
+
+#### In Progress
+**Definition:** The document describes something being actively implemented in the application. The contents of this document are being built.
+
+**Use When:**
+- Feature spec being implemented
+- Architecture decision being executed
+- Roadmap item in development
+
+**Metadata:**
+```markdown
+- **Status:** In Progress
+- **Implementation Started:** [Date]
+- **Target Completion:** [Date]
+- **Related PR/Issue:** [Link]
+```
+
+**Note:** This is distinct from "Draft" - "In Progress" means the document is complete but what it DESCRIBES is being built.
+
+#### Deprecated
+**Definition:** The document is still accurate but a better alternative exists. Users should migrate to the alternative.
+
+**Use When:**
+- New approach supersedes old approach
+- Old method still works but isn't recommended
+- Grace period before archiving
+
+**Required Metadata:**
+```markdown
+- **Status:** Deprecated
+- **Deprecated Date:** [Date]
+- **Deprecated Reason:** [Why deprecated]
+- **Alternative:** [Link to replacement document or approach]
+- **Archive Date:** [Planned archive date, typically 30-90 days]
+```
+
+**Required Notice at Top of Document:**
+```markdown
+> ⚠️ **DEPRECATED:** This document is deprecated as of [Date].
+> **Reason:** [Brief reason]
+> **Use Instead:** [Link to alternative document]
+> **Archive Date:** This document will be archived on [Date].
+```
+
+#### Superseded
+**Definition:** This document has been replaced by a newer version. The new version is the authoritative source.
+
+**Use When:**
+- New version of document created (v1 → v2)
+- Document was split into multiple documents
+- Document was merged with another
+
+**Required Metadata:**
+```markdown
+- **Status:** Superseded
+- **Superseded Date:** [Date]
+- **Superseded By:** [Link to new document]
+- **Superseded Reason:** [Why replaced - version update, split, merge]
+- **Archive Date:** [Planned archive date]
+```
+
+**Required Notice at Top of Document:**
+```markdown
+> ⚠️ **SUPERSEDED:** This document was superseded on [Date].
+> **Replaced By:** [Link to new document]
+> **Reason:** [Version update / Split into multiple docs / Merged with X]
+> **Archive Date:** This document will be archived on [Date].
+```
+
+#### Archived
+**Definition:** Historical reference only. Document is no longer maintained or relevant for current work.
+
+**Use When:**
+- Grace period after deprecation/supersession ended
+- Document no longer applicable
+- Kept only for historical reference
+
+**Required Metadata:**
+```markdown
+- **Status:** Archived
+- **Archived Date:** [Date]
+- **Archived From:** [Previous status - Deprecated/Superseded]
+- **Archived Reason:** [Why archived]
+- **Historical Context:** [Brief note on what this was for]
+```
+
+**File Location:** Move to `docs/archive/` with `_archived_YYYY-MM-DD` suffix.
+
+---
+
+## Status Transitions
+
+### Valid Status Flows
+
+```
+Planning → In Roadmap → Draft → In Review → Active
+                                              ↓
+                         In Progress ←────────┘
+                              ↓
+                           Active
+                              ↓
+                    ┌─────────┴─────────┐
+                    ↓                   ↓
+              Deprecated           Superseded
+                    ↓                   ↓
+                    └─────────┬─────────┘
+                              ↓
+                          Archived
+```
+
+### Invalid Transitions
+
+- ❌ `Archived` → Any other status (archived is final)
+- ❌ `Draft` → `Archived` (must go through Active first)
+- ❌ `Planning` → `Active` (must go through Draft and Review)
+
+### Transition Checklist
+
+When changing status:
+
+- [ ] Update `Status` field in metadata
+- [ ] Add date field for new status (e.g., `Deprecated Date:`)
+- [ ] Add reason field if applicable
+- [ ] Add link to replacement if Superseded
+- [ ] Add notice banner at top if Deprecated/Superseded
+- [ ] Update INDEX.md with status change
+- [ ] Update `Last Updated` timestamp
+- [ ] Increment version number
+
+---
+
+## INDEX.md Maintenance
+
+### When to Update INDEX.md
+
+**ALWAYS update INDEX.md when:**
+- Creating a new document
+- Changing a document's status
+- Renaming or moving a document
+- Archiving a document
+- Creating a new subdirectory
+
+### INDEX.md Structure Requirements
+
+Every `/docs/INDEX.md` should include:
+
+#### 1. Document Status Changes Section
+
+Track all status changes for audit trail:
+
+```markdown
+## Document Status Changes
+
+| Date | Document | Previous Status | New Status | Reason | By |
+|------|----------|-----------------|------------|--------|-----|
+| 12-09-2025 | api_v1_reference.md | Active | Superseded | v2 released | @developer |
+| 12-01-2025 | old_guide.md | Deprecated | Archived | Grace period ended | @developer |
+| 11-15-2025 | new_feature.md | Draft | In Review | Ready for review | @developer |
+```
+
+#### 2. Recently Updated Section
+
+```markdown
+## Recently Updated (Last 30 Days)
+
+| Document | Updated | Version | Status |
+|----------|---------|---------|--------|
+| [API Reference](./api/API_REFERENCE.md) | 12-09-2025 | 2.1 | Active |
+| [Setup Guide](./getting-started/SETUP.md) | 12-05-2025 | 1.3 | Active |
+```
+
+#### 3. Documents by Status Section
+
+```markdown
+## Documents by Status
+
+### Active Documents
+- [Document 1](./path/doc1.md) - Description
+- [Document 2](./path/doc2.md) - Description
+
+### In Progress (Being Implemented)
+- [Feature Spec](./specs/feature.md) - Implementation started 12-01-2025
+
+### Draft Documents
+- [New Guide](./guides/new.md) - ETA: 12-15-2025
+
+### Deprecated/Superseded (Pending Archive)
+| Document | Status | Replacement | Archive Date |
+|----------|--------|-------------|--------------|
+| [Old API](./api/old.md) | Superseded | [New API](./api/new.md) | 01-15-2026 |
+```
+
+### INDEX.md Update Checklist
+
+When modifying INDEX.md:
+
+- [ ] Add/update entry in main document listing
+- [ ] Update "Recently Updated" section if within 30 days
+- [ ] Add entry to "Document Status Changes" if status changed
+- [ ] Update "Documents by Status" section
+- [ ] Increment INDEX.md version
+- [ ] Update INDEX.md "Last Updated" timestamp
+
+---
+
+## File Naming for Version Changes
+
+### When Creating New Versions
+
+**DO NOT create versioned filenames:**
+```
+❌ api_reference_v1.md
+❌ api_reference_v2.md
+```
+
+**DO create new document and supersede old:**
+```
+✅ api_reference.md (v2.0 in metadata)
+✅ api_reference_legacy.md (Superseded, archived later)
+```
+
+**Or use descriptive names:**
+```
+✅ api_reference_rest.md (REST API)
+✅ api_reference_graphql.md (GraphQL API)
+```
+
+### Archive Naming Convention
+
+When archiving, append `_archived_YYYY-MM-DD`:
+- Original: `api_reference.md`
+- Archived: `archive/api_reference_archived_2025-12-09.md`
+
+---
+
+## Integration with Other Rules
+
+### documentation-metadata.mdc
+- This rule defines STATUS options and requirements
+- That rule defines overall metadata structure
+- Both work together for complete metadata
+
+### documentation-dependency-tracking.mdc
+- When superseding, update dependencies in both old and new docs
+- Old doc should reference new doc
+- New doc may reference old for historical context
+
+### core/version-management.mdc
+- That rule covers all file types
+- This rule extends it specifically for .md documentation
+- Both use semantic versioning principles
+
+---
+
+## Examples
+
+### Example 1: Superseding a Document
+
+**Old Document (`api_v1_guide.md`):**
+```markdown
+# API v1 Guide
+
+> ⚠️ **SUPERSEDED:** This document was superseded on 12-09-2025.
+> **Replaced By:** [API v2 Guide](./api_v2_guide.md)
+> **Reason:** Version 2.0 of the API released with breaking changes.
+> **Archive Date:** This document will be archived on 03-09-2026.
+
+## Metadata
+- **Status:** Superseded
+- **Superseded Date:** 12-09-2025
+- **Superseded By:** [API v2 Guide](./api_v2_guide.md)
+- **Superseded Reason:** API v2.0 released with new authentication model
+- **Archive Date:** 03-09-2026
+- **Version:** 1.5
+- **Last Updated:** 12-09-2025 12:00:00 EST
+```
+
+### Example 2: Deprecating a Document
+
+**Deprecated Document:**
+```markdown
+# Legacy Authentication Guide
+
+> ⚠️ **DEPRECATED:** This document is deprecated as of 12-01-2025.
+> **Reason:** New OAuth 2.0 flow supersedes this approach.
+> **Use Instead:** [OAuth 2.0 Authentication](./auth/oauth2.md)
+> **Archive Date:** This document will be archived on 03-01-2026.
+
+## Metadata
+- **Status:** Deprecated
+- **Deprecated Date:** 12-01-2025
+- **Deprecated Reason:** OAuth 2.0 provides better security and UX
+- **Alternative:** [OAuth 2.0 Authentication](./auth/oauth2.md)
+- **Archive Date:** 03-01-2026
+- **Version:** 2.3
+- **Last Updated:** 12-01-2025 10:00:00 EST
+```
+
+### Example 3: In Progress Document
+
+**Feature Specification Being Implemented:**
+```markdown
+# User Dashboard Feature Specification
+
+## Metadata
+- **Status:** In Progress
+- **Implementation Started:** 12-05-2025
+- **Target Completion:** 01-15-2026
+- **Related PR:** [#234](https://github.com/org/repo/pull/234)
+- **Owner:** Frontend Team
+- **Version:** 1.0
+- **Last Updated:** 12-09-2025 12:00:00 EST
+
+## Overview
+This specification defines the user dashboard feature currently being implemented...
+```
+
+---
+
+## Validation Checklist
+
+When working with documentation versions and status:
+
+- [ ] Version number is in metadata, NOT in filename
+- [ ] Status is one of the valid options
+- [ ] Status-specific metadata fields are present (e.g., `Superseded Date`)
+- [ ] Deprecated/Superseded documents have notice banner
+- [ ] Deprecated/Superseded documents link to replacement
+- [ ] INDEX.md is updated with status changes
+- [ ] Document Status Changes table updated
+- [ ] Recently Updated section current
+- [ ] Archive date set for deprecated/superseded docs (30-90 days)
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [documentation-metadata.mdc](./documentation-metadata.mdc) - Overall metadata structure
+  - [documentation-dependency-tracking.mdc](./documentation-dependency-tracking.mdc) - Dependency management
+  - [../core/version-management.mdc](../core/version-management.mdc) - General versioning rules
+- **Standards:**
+  - [documentation-management.md](../../standards/project-planning/documentation-management.md) - Documentation standards
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when creating or modifying documentation files.**
+
+**Agents should:**
+1. Use `X.Y` version format in metadata (never in filenames)
+2. Set appropriate status based on document lifecycle
+3. Include all required status-specific metadata fields
+4. Add notice banners for Deprecated/Superseded documents
+5. Link to replacement documents when superseding
+6. Update INDEX.md on any status change
+7. Maintain Document Status Changes table in INDEX.md
+8. Follow status transition rules (no invalid transitions)
+9. Plan archive dates for deprecated/superseded docs (30-90 days)
+
+**Quick Status Reference:**
+- **Planning/In Roadmap/Draft** → Document being prepared
+- **In Review** → Ready for approval
+- **Active** → Use this document
+- **In Progress** → Document contents being built in app
+- **Deprecated** → Use alternative, still works
+- **Superseded** → Use replacement, this is old version
+- **Archived** → Historical only, don't use
+
+---
+
+*This rule ensures consistent versioning and status management for all documentation, enabling clear lifecycle tracking and easy navigation to current, relevant documents.*

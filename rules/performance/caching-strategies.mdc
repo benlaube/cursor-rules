@@ -1,0 +1,200 @@
+---
+description: Caching strategies for optimizing application performance. This rule covers client-side caching, server-side caching, cache invalidation, and CDN usage. Agents must implement appropriate caching for data that benefits from it, use proper cache keys, implement cache invalidation strategies, and avoid caching sensitive or rapidly-changing data.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/cache/**,**/api/**,**/services/**
+type: Performance Rule - Caching strategies
+applicability: When implementing caching
+dependencies: []
+relatedCommands: []
+relatedRules: [[query-optimization.mdc], [../api/api-routes.mdc]]
+relatedStandards: []
+---
+
+# Caching Strategies Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Implementing data caching
+- Optimizing API responses
+- Reducing database load
+- Improving response times
+
+---
+
+## Core Principles
+
+1. **Cache what's expensive** - DB queries, API calls, computations
+2. **Invalidate correctly** - Stale data is worse than no cache
+3. **Set appropriate TTLs** - Balance freshness vs performance
+4. **Don't cache sensitive data** - User-specific or secure content
+
+---
+
+## Caching Patterns
+
+### In-Memory Cache (Simple)
+
+```typescript
+// Simple LRU cache
+import LRU from 'lru-cache';
+
+const cache = new LRU<string, any>({
+  max: 500,
+  ttl: 1000 * 60 * 5, // 5 minutes
+});
+
+async function getCachedUser(id: string): Promise<User> {
+  const cached = cache.get(`user:${id}`);
+  if (cached) return cached;
+  
+  const user = await db.users.findById(id);
+  cache.set(`user:${id}`, user);
+  return user;
+}
+```
+
+### Redis Cache (Distributed)
+
+```typescript
+import Redis from 'ioredis';
+
+const redis = new Redis(process.env.REDIS_URL);
+
+async function getCachedData<T>(
+  key: string,
+  fetcher: () => Promise<T>,
+  ttlSeconds = 300
+): Promise<T> {
+  const cached = await redis.get(key);
+  if (cached) return JSON.parse(cached);
+  
+  const data = await fetcher();
+  await redis.setex(key, ttlSeconds, JSON.stringify(data));
+  return data;
+}
+```
+
+---
+
+## Cache Invalidation
+
+### Time-Based (TTL)
+
+```typescript
+// Short TTL for frequently changing data
+cache.set('dashboard:stats', stats, { ttl: 60 * 1000 }); // 1 minute
+
+// Longer TTL for stable data
+cache.set('config:settings', settings, { ttl: 60 * 60 * 1000 }); // 1 hour
+```
+
+### Event-Based
+
+```typescript
+// Invalidate on update
+async function updateUser(id: string, data: UserUpdate): Promise<User> {
+  const user = await db.users.update(id, data);
+  
+  // Invalidate related caches
+  await cache.delete(`user:${id}`);
+  await cache.delete(`user:${user.email}`);
+  
+  return user;
+}
+```
+
+### Pattern-Based
+
+```typescript
+// Invalidate all matching keys
+async function invalidateUserCaches(userId: string) {
+  const pattern = `user:${userId}:*`;
+  const keys = await redis.keys(pattern);
+  if (keys.length > 0) {
+    await redis.del(...keys);
+  }
+}
+```
+
+---
+
+## HTTP Caching
+
+### Cache-Control Headers
+
+```typescript
+// Static assets
+app.use('/static', (req, res, next) => {
+  res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year
+  next();
+});
+
+// API responses
+app.get('/api/public-data', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes
+  res.json(data);
+});
+
+// No caching for sensitive data
+app.get('/api/user/profile', (req, res) => {
+  res.setHeader('Cache-Control', 'private, no-store');
+  res.json(user);
+});
+```
+
+### ETag Support
+
+```typescript
+import etag from 'etag';
+
+app.get('/api/data', async (req, res) => {
+  const data = await fetchData();
+  const tag = etag(JSON.stringify(data));
+  
+  if (req.headers['if-none-match'] === tag) {
+    return res.status(304).end();
+  }
+  
+  res.setHeader('ETag', tag);
+  res.json(data);
+});
+```
+
+---
+
+## What to Cache
+
+### Good Cache Candidates
+- ✅ Database query results
+- ✅ External API responses
+- ✅ Computed/aggregated data
+- ✅ Static configuration
+- ✅ User preferences (non-sensitive)
+
+### Do Not Cache
+- ❌ Sensitive user data
+- ❌ Authentication tokens
+- ❌ Rapidly changing data
+- ❌ Unique per-request data
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Caching without invalidation strategy
+- ❌ Very long TTLs without manual invalidation
+- ❌ Caching errors
+- ❌ No cache monitoring/metrics
+- ❌ Unbounded cache growth
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [query-optimization.mdc](./query-optimization.mdc) - Optimize before caching
+  - [../api/api-routes.mdc](../api/api-routes.mdc) - API response caching

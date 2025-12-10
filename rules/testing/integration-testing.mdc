@@ -1,0 +1,285 @@
+---
+description: Integration testing standards for testing component interactions and system boundaries. This rule covers database testing, API testing, service integration, test isolation, and fixture management. Agents must test real interactions between components, use test databases, implement proper cleanup, and ensure tests can run independently.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/integration/**,**/*.integration.test.{ts,js}
+type: Testing Rule - Integration testing standards
+applicability: Integration test development
+dependencies: []
+relatedCommands: []
+relatedRules: [[unit-testing.mdc], [e2e-testing.mdc], [test-data-management.mdc]]
+relatedStandards: []
+---
+
+# Integration Testing Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Testing interactions between components
+- Testing database operations
+- Testing API endpoints
+- Testing external service integrations
+
+---
+
+## Core Principles
+
+1. **Test real interactions** - Use actual components, not mocks
+2. **Isolate test data** - Each test uses its own data
+3. **Clean up properly** - No test pollution
+4. **Test boundaries** - Focus on integration points
+
+---
+
+## Database Integration Testing
+
+### Setup and Teardown
+
+```typescript
+import { createTestClient } from '../test-utils/db';
+
+describe('UserRepository', () => {
+  let db: TestDatabase;
+  
+  beforeAll(async () => {
+    db = await createTestClient();
+  });
+  
+  afterAll(async () => {
+    await db.close();
+  });
+  
+  beforeEach(async () => {
+    await db.clean(); // Clear tables before each test
+  });
+  
+  it('should save and retrieve user', async () => {
+    const repo = new UserRepository(db);
+    
+    const created = await repo.create({
+      email: 'test@example.com',
+      name: 'Test User',
+    });
+    
+    const found = await repo.findById(created.id);
+    
+    expect(found).toEqual(created);
+  });
+});
+```
+
+### Test Database Configuration
+
+```typescript
+// test-utils/db.ts
+export async function createTestClient(): Promise<TestDatabase> {
+  const connectionString = process.env.TEST_DATABASE_URL;
+  
+  if (!connectionString) {
+    throw new Error('TEST_DATABASE_URL is required');
+  }
+  
+  const client = new Database(connectionString);
+  await client.connect();
+  
+  return {
+    client,
+    clean: async () => {
+      await client.query('TRUNCATE users, posts CASCADE');
+    },
+    close: async () => {
+      await client.close();
+    },
+  };
+}
+```
+
+---
+
+## API Integration Testing
+
+### Testing HTTP Endpoints
+
+```typescript
+import request from 'supertest';
+import { app } from '../app';
+import { createTestUser, cleanDatabase } from '../test-utils';
+
+describe('POST /api/users', () => {
+  beforeEach(async () => {
+    await cleanDatabase();
+  });
+  
+  it('should create a user', async () => {
+    const response = await request(app)
+      .post('/api/users')
+      .send({ email: 'test@example.com', name: 'Test' })
+      .expect(201);
+    
+    expect(response.body.email).toBe('test@example.com');
+    expect(response.body.id).toBeDefined();
+  });
+  
+  it('should return 400 for invalid email', async () => {
+    const response = await request(app)
+      .post('/api/users')
+      .send({ email: 'invalid', name: 'Test' })
+      .expect(400);
+    
+    expect(response.body.error).toBe('Validation failed');
+  });
+  
+  it('should require authentication', async () => {
+    await request(app)
+      .get('/api/users/me')
+      .expect(401);
+  });
+  
+  it('should return user with valid token', async () => {
+    const user = await createTestUser();
+    const token = generateToken(user);
+    
+    const response = await request(app)
+      .get('/api/users/me')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    
+    expect(response.body.id).toBe(user.id);
+  });
+});
+```
+
+---
+
+## Service Integration Testing
+
+### Testing Service Dependencies
+
+```typescript
+describe('OrderService', () => {
+  let orderService: OrderService;
+  let paymentService: PaymentService;
+  let inventoryService: InventoryService;
+  
+  beforeEach(async () => {
+    // Use real services with test configuration
+    paymentService = new PaymentService({ testMode: true });
+    inventoryService = new InventoryService(testDb);
+    orderService = new OrderService(paymentService, inventoryService);
+  });
+  
+  it('should process order end-to-end', async () => {
+    // Create test inventory
+    await inventoryService.addStock('product-1', 10);
+    
+    const order = await orderService.create({
+      productId: 'product-1',
+      quantity: 2,
+      paymentMethod: 'card',
+    });
+    
+    expect(order.status).toBe('completed');
+    
+    // Verify inventory was reduced
+    const stock = await inventoryService.getStock('product-1');
+    expect(stock).toBe(8);
+  });
+});
+```
+
+---
+
+## Test Data Management
+
+### Factory Functions
+
+```typescript
+// test-utils/factories.ts
+export function createUserData(overrides = {}): CreateUserInput {
+  return {
+    email: `test-${Date.now()}@example.com`,
+    name: 'Test User',
+    ...overrides,
+  };
+}
+
+export async function createTestUser(overrides = {}): Promise<User> {
+  const data = createUserData(overrides);
+  return userRepository.create(data);
+}
+```
+
+### Seeding Data
+
+```typescript
+// test-utils/seed.ts
+export async function seedTestData() {
+  const admin = await createTestUser({ role: 'admin' });
+  const users = await Promise.all([
+    createTestUser({ name: 'User 1' }),
+    createTestUser({ name: 'User 2' }),
+  ]);
+  
+  return { admin, users };
+}
+```
+
+---
+
+## Isolation Strategies
+
+### Database Transactions
+
+```typescript
+describe('UserService', () => {
+  it('should rollback on error', async () => {
+    await db.transaction(async (tx) => {
+      const service = new UserService(tx);
+      
+      try {
+        await service.createWithProfile(invalidData);
+      } catch {
+        // Transaction rolled back
+      }
+      
+      // Verify nothing was created
+      const count = await tx.query('SELECT COUNT(*) FROM users');
+      expect(count).toBe(0);
+    });
+  });
+});
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Sharing data between tests
+- ❌ Not cleaning up after tests
+- ❌ Using production database
+- ❌ Hard-coded test data
+- ❌ Sequential test dependencies
+- ❌ No timeout handling
+
+---
+
+## Security Checklist
+
+- [ ] Test database isolated from production
+- [ ] Each test cleans up its data
+- [ ] Tests can run in parallel
+- [ ] Factory functions for test data
+- [ ] API auth tested
+- [ ] Error scenarios covered
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [unit-testing.mdc](./unit-testing.mdc) - Unit tests
+  - [e2e-testing.mdc](./e2e-testing.mdc) - E2E tests
+  - [test-data-management.mdc](./test-data-management.mdc) - Test data patterns

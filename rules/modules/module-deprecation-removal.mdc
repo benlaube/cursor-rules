@@ -1,0 +1,323 @@
+---
+description: Auto-applied rule for handling module deprecation and removal. Guides identification of deprecated modules, migration to alternatives, and safe removal from projects.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 06:49:53 EST
+alwaysApply: false
+globs: **/modules/**
+type: Behavioral Rule - Module deprecation handling guidance
+applicability: When encountering deprecated modules, migrating away from deprecated modules, or removing modules from projects
+dependencies: []
+relatedCommands: []
+relatedRules: [module-discovery-selection.mdc, module-migration-upgrade.mdc]
+relatedStandards: [module-structure.md]
+---
+
+# Module Deprecation & Removal Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Encountering a deprecated module
+- Module README.md has deprecation notice
+- Migrating away from deprecated module
+- Removing module from project
+- Module is no longer maintained
+
+---
+
+## Core Principle
+
+**Deprecated modules should be identified, alternatives should be found, and migration should be planned and executed safely.** Deprecated modules pose security and maintenance risks and should be replaced with maintained alternatives.
+
+**Source Standard:** `standards/module-structure.md`
+
+---
+
+## Agent Responsibilities
+
+### 1. Deprecation Indicators
+
+**Identify deprecated modules by checking:**
+
+#### ✅ Deprecation Notice in README.md
+
+**Look for:**
+- "⚠️ DEPRECATED" in module title
+- Deprecation notice section
+- "This module is deprecated" message
+- End-of-life date
+
+**Example:**
+```markdown
+# ⚠️ DEPRECATED: Old Module
+
+> **This module is deprecated and will not receive updates.**
+> Use `new-module` instead.
+
+## Migration Guide
+[Link to migration guide]
+```
+
+#### ✅ Recommended Alternative
+
+**Deprecated modules should recommend:**
+- Alternative module name
+- Migration guide
+- Reason for deprecation
+- Timeline for removal
+
+#### ✅ Maintenance Status
+
+**Check for:**
+- Last updated date (very old)
+- No recent commits
+- Issues not being addressed
+- No active maintenance
+
+### 2. Deprecation Response
+
+**When encountering a deprecated module:**
+
+#### Step 1: Identify Deprecation
+
+1. **Check Module README.md:**
+   - Look for deprecation notice
+   - Note recommended alternative
+   - Review migration guide
+
+2. **Check Module Status:**
+   - Review last updated date
+   - Check for maintenance activity
+   - Verify deprecation status
+
+#### Step 2: Find Alternative
+
+**If alternative is recommended:**
+
+1. **Check Alternative Module:**
+   - Read alternative module's README.md
+   - Verify it solves the same problem
+   - Check compatibility
+
+2. **If No Alternative Recommended:**
+   - Search `modules/` for similar functionality
+   - Check if functionality can be replaced
+   - Consider implementing inline if simple
+
+#### Step 3: Plan Migration
+
+**Create migration plan:**
+
+1. **List Module Usage:**
+   - Find all imports of deprecated module
+   - List all usage locations
+   - Identify dependencies
+
+2. **Plan Migration Steps:**
+   - Integrate alternative module
+   - Update all usage locations
+   - Remove deprecated module
+   - Test thoroughly
+
+3. **Estimate Effort:**
+   - Count usage locations
+   - Estimate update time
+   - Plan testing approach
+
+#### Step 4: Execute Migration
+
+**Follow migration process:**
+
+1. **Integrate Alternative:**
+   - Follow `module-integration-patterns.mdc`
+   - Integrate alternative module
+   - Verify it works
+
+2. **Update Code:**
+   - Replace deprecated module usage
+   - Update imports
+   - Update function calls
+   - Update configuration
+
+3. **Test Migration:**
+   - Test all affected functionality
+   - Verify no regressions
+   - Test edge cases
+
+4. **Remove Deprecated Module:**
+   - Delete module files
+   - Remove dependencies
+   - Update documentation
+
+### 3. Removal Process
+
+**Follow this process when removing a module:**
+
+#### Step 1: Verify Removal is Safe
+
+**Before removing, verify:**
+
+- [ ] All module imports removed
+- [ ] All module usage replaced
+- [ ] Alternative module integrated
+- [ ] All tests pass
+- [ ] No broken functionality
+
+#### Step 2: Remove Module Files
+
+**Delete module files:**
+
+```bash
+# Remove module directory
+rm -rf lib/{deprecated-module-name}
+
+# Or if in modules/
+rm -rf modules/{deprecated-module-name}
+```
+
+#### Step 3: Remove Dependencies
+
+**Remove unused dependencies:**
+
+```bash
+# Remove from package.json
+npm uninstall {dep1} {dep2}
+
+# Or manually edit package.json and run
+npm install
+```
+
+#### Step 4: Clean Up Database (if applicable)
+
+**If module had database changes:**
+
+1. **Review Migrations:**
+   - Check if migrations should be reverted
+   - Consider keeping data if still needed
+   - Plan data migration if needed
+
+2. **Revert Migrations (if safe):**
+   ```sql
+   -- Only if safe and data not needed
+   DROP TABLE IF EXISTS {module_table};
+   ```
+
+#### Step 5: Update Documentation
+
+**Document removal:**
+
+1. **Update Project README.md:**
+   - Remove module from integrated modules list
+   - Note migration to alternative
+
+2. **Update CHANGELOG.md:**
+   ```markdown
+   ## [Unreleased] - YYYY-MM-DD
+   
+   ### Removed
+   - **{deprecated-module}** - Removed deprecated module, migrated to {alternative-module}
+   ```
+
+3. **Update Code Comments:**
+   - Remove references to deprecated module
+   - Update comments if needed
+
+### 4. Removal Checklist
+
+**Complete removal checklist:**
+
+- [ ] Deprecated module identified
+- [ ] Alternative module found/integrated
+- [ ] All module imports removed
+- [ ] All module usage replaced
+- [ ] Module files deleted
+- [ ] Dependencies removed
+- [ ] Database cleaned up (if applicable)
+- [ ] Tests updated
+- [ ] Documentation updated
+- [ ] CHANGELOG.md updated
+- [ ] All tests pass
+- [ ] No broken functionality
+
+### 5. Examples
+
+#### Example 1: Deprecated Module with Alternative
+
+**Situation:** `old-logger-module` is deprecated, use `logger-module` instead
+
+**Process:**
+1. ✅ Identify deprecation in README.md
+2. ✅ Check alternative: `logger-module`
+3. ✅ Integrate `logger-module`
+4. ✅ Replace all `old-logger-module` usage
+5. ✅ Remove `old-logger-module` files
+6. ✅ Remove dependencies
+7. ✅ Update documentation
+8. ✅ Test thoroughly
+
+#### Example 2: Deprecated Module Without Alternative
+
+**Situation:** `experimental-module` is deprecated, no alternative
+
+**Process:**
+1. ✅ Identify deprecation
+2. ✅ Check if functionality still needed
+3. ✅ If needed: Implement inline or find alternative
+4. ✅ If not needed: Remove module
+5. ✅ Clean up code
+6. ✅ Update documentation
+
+---
+
+## Integration with Other Rules
+
+This rule works with:
+
+### `module-discovery-selection.mdc`
+- Check for deprecation when selecting modules
+
+### `module-migration-upgrade.mdc`
+- Migration process applies when replacing deprecated modules
+
+---
+
+## Related Files
+
+- **Standards:**
+  - [module-structure.md](../../standards/module-structure.md) - Module structure
+- **Rules:**
+  - [module-discovery-selection.mdc](./module-discovery-selection.mdc) - Module selection
+  - [module-migration-upgrade.mdc](./module-migration-upgrade.mdc) - Migration process
+- **Modules:**
+  - `modules/*/README.md` - Check for deprecation notices
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when encountering deprecated modules.**
+
+**Agents should:**
+1. **Identify deprecation** by checking README.md
+2. **Find alternative** module or solution
+3. **Plan migration** carefully
+4. **Execute migration** step-by-step
+5. **Remove deprecated module** safely
+6. **Update documentation** completely
+7. **Test thoroughly** after removal
+
+**Deprecation checklist:**
+- [ ] Deprecation identified
+- [ ] Alternative found
+- [ ] Migration planned
+- [ ] Alternative integrated
+- [ ] Code updated
+- [ ] Module removed
+- [ ] Dependencies removed
+- [ ] Documentation updated
+- [ ] Tests pass
+
+---
+
+*This rule ensures deprecated modules are identified and safely removed, preventing security and maintenance issues.*

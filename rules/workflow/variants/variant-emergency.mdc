@@ -1,0 +1,169 @@
+---
+description: Emergency/Hotfix workflow variant for time-critical fixes, production incidents, and urgent bugs. Streamlines the standard workflow for rapid response while ensuring essential quality checks.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 09:37:22 EST
+alwaysApply: false
+globs:
+type: Workflow Variant Rule - Emergency/Hotfix handling
+applicability: When task is identified as time-critical or production incident
+dependencies: []
+relatedCommands: [[audit-security.md](../../commands/audit-security.md)]
+relatedRules: [[../task-workflow.mdc](../task-workflow.mdc), [../workflow-variants.mdc](../workflow-variants.mdc), [../auto-heal.mdc](../auto-heal.mdc)]
+relatedStandards: []
+---
+
+# Emergency/Hotfix Workflow Variant
+
+This variant streamlines the standard workflow for rapid response to production incidents and time-critical fixes.
+
+> **Parent Rule:** See `workflow-variants.mdc` for variant selection and `task-workflow.mdc` for the complete workflow.
+
+---
+
+## When to Use
+
+- Production incidents affecting users
+- Time-critical bug fixes
+- Urgent security patches that can't wait for full review
+- System downtime situations
+
+## Trigger Keywords
+
+User request contains: "urgent", "production down", "emergency", "hotfix", "critical bug", "ASAP"
+
+---
+
+## Step-by-Step Modifications
+
+### Step 0: Streamlined Requirements
+
+**Do:**
+- Immediately understand the issue
+- Identify affected systems
+- Confirm the fix approach quickly
+
+**Skip:**
+- Non-critical clarifications
+- Extensive scope discussions
+- Workflow variant confirmation (assume Emergency)
+
+**Time Target:** < 2 minutes for clarification
+
+### Step 1: Minimal Pre-Flight
+
+**Do:**
+- Git status check (must be on correct branch or create hotfix branch)
+- Quick dependency check
+- Verify can connect to affected systems
+
+**Skip:**
+- Full test suite validation
+- Build verification (unless directly related)
+- Linter checks (can clean up after)
+
+**Git Branch:** Use `hotfix/{issue-description}` naming
+
+### Step 2: Focused Development
+
+**Do:**
+- Minimal viable fix only
+- Focus on the specific issue
+- Document the fix inline
+- Test the specific fix manually
+
+**Skip:**
+- Code cleanup unrelated to fix
+- Refactoring opportunities
+- Feature additions
+
+**Rule:** No scope creep - fix the issue only
+
+### Step 3: Critical Validation
+
+**Do:**
+- Test the specific fix works
+- Verify no obvious regressions
+- Check critical user flows
+- Security scan if security-related
+
+**Skip:**
+- Full test suite (run after deployment)
+- Comprehensive lint checks
+- Full documentation update
+
+### Post-Deployment (Required)
+
+After deploying the fix:
+- Full test suite run
+- Complete validation
+- Documentation update
+- CHANGELOG update
+
+---
+
+## Emergency Workflow Checklist
+
+```markdown
+- [ ] Issue clearly understood
+- [ ] Hotfix branch created: `hotfix/{description}`
+- [ ] Minimal fix implemented
+- [ ] Specific fix tested
+- [ ] No obvious regressions
+- [ ] Deployed to production
+- [ ] Post-deploy: Full validation scheduled
+- [ ] Post-deploy: CHANGELOG updated
+```
+
+---
+
+## Comparison with Standard Workflow
+
+| Phase | Standard | Emergency |
+|-------|----------|-----------|
+| **Step 0** | Full clarification | Streamlined (<2 min) |
+| **Step 1** | Full validation | Minimal (git + deps) |
+| **Step 2** | Full development | Focused fix only |
+| **Step 3** | Full validation | Critical tests only |
+| **Post** | Normal process | Full validation required |
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [workflow-variants.mdc](../workflow-variants.mdc) - Variant router/index
+  - [task-workflow.mdc](../task-workflow.mdc) - Parent workflow rule
+  - [auto-heal.mdc](../auto-heal.mdc) - Error recovery strategies
+- **Checklists:**
+  - [requirements_clarification_checklist_v1_0.md](../../../standards/process/checklists/requirements_clarification_checklist_v1_0.md) - Step 0 checklist
+
+---
+
+## How to Use This Rule
+
+**This rule activates when a task is identified as time-critical or emergency.**
+
+**Agents should:**
+1. Recognize emergency trigger keywords
+2. Apply streamlined requirements clarification
+3. Focus on minimal viable fix
+4. Complete critical validation only
+5. Schedule post-deployment validation
+6. Use `hotfix/{description}` branch naming
+7. Commit with appropriate prefix (often `fix(scope):` or `hotfix(scope):`)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

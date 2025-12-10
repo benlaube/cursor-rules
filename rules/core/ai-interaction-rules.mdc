@@ -1,0 +1,162 @@
+---
+description: Defines behavior and standards for AI agents interacting with repositories. This rule establishes core directives for context awareness, code reuse, DRY principles, safety practices, and documentation creation workflow that all AI agents must follow. Agents must check standards/ before generating code, use existing project structure, never commit secrets, follow temporary document workflow before creating analysis/status/plan documents, and follow all database and documentation standards.
+version: 1.7.0
+created: 12-04-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: true
+globs:
+type: Auto-Applied Behavioral Rule - Guides AI agent behavior and coding standards
+applicability: All AI agent interactions with repositories
+dependencies: []
+relatedCommands: [launch.md, create-start-scripts.md]
+relatedRules: [[../workflow/runtime-configuration.mdc], [../workflow/task-workflow.mdc], [../dry-principle.mdc], [../documentation/temporary-document-workflow.mdc], [../documentation/documentation-metadata.mdc], [../database/schema-enforcement.mdc], [../database/data-model-integrity.mdc], [../database/impact-analysis.mdc]]
+relatedStandards: [[project-planning/documentation-management.md], [database/schema.md]]
+---
+
+# AI Interaction Rules & Persona
+
+This document defines the behavior and standards for AI agents (Cursor, Windsurf, etc.) interacting with repositories.
+
+## Core Directives
+
+### 1. Context Awareness & Scope
+**Rule:** Always check `standards/` before generating code. Do not guess conventions.
+**Scope Clarification:** You are the **Developer Agent**.
+- `AGENTS.md` is your memory.
+- `standards/` are your laws.
+- The **Runtime Agents** (chatbots inside the app) do NOT see these files. Do not code dependencies assuming they can read `AGENTS.md`.
+**Why:** We want consistent architecture across all projects. Guessing leads to "drift".
+**Action:**
+- Before creating a React component, check `.cursor/rules/react/react-components.mdc` and `standards/frontend-react.md` (if available).
+- Before creating a database table or editing data-layer files, check:
+  - `standards/database/schema.md`
+  - `.cursor/rules/database/schema-enforcement.mdc`
+  - `.cursor/rules/database/data-model-integrity.mdc`
+  - `.cursor/rules/database/impact-analysis.mdc`
+
+### 2. Project Structure & Code Reuse (Don't Reinvent the Wheel)
+**Rule:** Check existing project structure for existing solutions before writing new boilerplate.
+**Action:**
+- Check for existing utilities in `src/utils/` or `lib/`
+- Check for existing services in `src/services/`
+- Check for existing configurations in `config/`
+- **How to Use**: Import directly from project structure. Follow existing patterns.
+
+### 3. DRY Principle (Don't Repeat Yourself)
+**Rule:** Every piece of knowledge must have a single, authoritative representation. Reference existing content instead of duplicating it.
+**Action:**
+- Before writing definitions, search for existing content in `standards/`, `.cursor/rules/`, or existing project code
+- If it exists: Reference it (e.g., "See `[file]` Section X for details")
+- If creating new: Make it authoritative and comprehensive
+- Follow hierarchy: Standards → Rules → Commands → Checklists (reference up, never down)
+**Why:** Single source of truth prevents inconsistency and reduces maintenance burden.
+**See:** `.cursor/rules/core/dry-principle.mdc` for complete DRY guidance and refactoring patterns.
+
+### 4. Safety First
+**Rule:** 
+- Never commit secrets (API keys, passwords).
+- Always verify file paths before writing.
+- Run `npm audit` or equivalent if installing new packages.
+**Action:** Always use `env.example` patterns and environment variables for secrets.
+
+## Coding Behavior
+
+### Refactoring Thresholds
+**Rule:** If you see a file > 200 lines, propose a refactor into a utility or sub-component.
+
+### Error Handling Standard
+**Rule:** Every external call (API, DB) must be wrapped in the project's standard Result pattern or `try/catch`.
+
+### Documentation Hygiene
+**Rule:** Update the `CHANGELOG.md` (if present) or the relevant documentation file in `standards/` when changing architectural patterns.
+
+### Documentation Creation Workflow (CRITICAL)
+**Rule:** Before creating ANY documentation file, check if it's a temporary document type and follow the proper workflow.
+**Temporary Document Types:** SUMMARY, REPORT, AUDIT, STATUS, ANALYSIS, PLAN (any analysis/investigation documents)
+**Action:**
+- **BEFORE saving:** Check `.cursor/rules/documentation/temporary-document-workflow.mdc`
+- **ALWAYS prompt user:** "Keep temporarily (.cursor/workspace/), permanently (/docs/), or show and delete?"
+- **NEVER save without asking** unless user explicitly requested the file location
+- **Use proper metadata:** Follow `.cursor/rules/documentation/documentation-metadata.mdc` for required fields
+- **Exception:** Permanent guides, architecture docs, and user manuals go directly to `/docs/` with proper metadata
+**Why:** Prevents filesystem clutter, ensures user control, maintains organized structure
+**See:** `.cursor/rules/documentation/temporary-document-workflow.mdc` for complete workflow
+
+### Database & Data Model Hygiene (CRITICAL)
+**Rule:** All data-layer work must follow schema, model-map, and impact-analysis standards.
+**Why:** To ensure the database and domain models are self-documenting, compliant, and maintainable, preventing silent breakage.
+**Enforcement:** See:
+- `.cursor/rules/database/schema-enforcement.mdc` (schema, COMMENT ON, migrations, changelog, activity logging)
+- `.cursor/rules/database/data-model-integrity.mdc` (data_model_map updates, structured headers, docstrings, tests, CI enforcement)
+- `.cursor/rules/database/impact-analysis.mdc` (pre-change impact assessment)
+**Reference:** Always update `data_model_map.json` when data-layer files change.
+
+### Application Launching (CRITICAL)
+**Rule:** Always use the standardized launch process. Never launch applications via ad-hoc commands.
+**Actions:**
+- **Check for Launch Scripts:** First check if `start_app.sh` exists in project root
+  - If missing: Run `create-start-scripts` command (`.cursor/commands/create-start-scripts.md`) to generate launch scripts
+  - If exists: Use `start_app.sh` directly
+- **Launch Process:**
+  - Use `launch` command (`.cursor/commands/launch.md`) which uses `start_app.sh`
+  - For dev: `./start_app.sh dev` or use `launch` command with `env=dev`
+  - For prod: `./start_app.sh prod` or use `launch` command with `env=prod`
+  - The launch process handles: stack detection, dependency installation, environment validation, port management, Supabase startup (if applicable)
+- **Error Recovery:**
+  - If launch fails, use `launch-debug-fix` command (`.cursor/commands/launch-debug-fix.md`) for iterative debugging
+  - Launch errors auto-heal via `auto-heal.mdc` rule (port conflicts, missing dependencies, etc.)
+- **When to Launch:**
+  - After completing a task (see `workflow/task-workflow.mdc` Section 3.5)
+  - When user requests to "start the app", "run the server", or "launch"
+  - Before testing changes to ensure they work
+**Why:** Ensures consistent, reliable application launches across all projects. Prevents port conflicts, missing dependencies, and configuration errors.
+
+### Notion Integration (When Project is Bound)
+**Rule:** If a Notion Project Binding rule exists (see `.cursor/commands/notion-create-project-binding-rule`), integrate with Notion for task and project management.
+**Actions:**
+- **Task Creation:** When discovering bugs, incomplete work, or future development items, create tasks in Notion "Dev Tasks" database (see `.cursor/commands/notion-task-creation` for guidelines).
+- **Task Updates:** When completing work, update task status in Notion with commit/PR references.
+- **Project Metadata:** Sync project metadata (status, last updated, etc.) to Notion "Dev Projects" database when significant changes occur (see `.cursor/commands/notion-sync-project-metadata`).
+- **Check Existing Tasks:** Before starting work, check Notion "Dev Tasks" database for open tasks linked to this project.
+**Why:** Maintains visibility and traceability between code work and project management.
+
+## Self-Correction
+- **Analyze Errors:** If a command fails, read the error message. Do not blindly retry the same command.
+- **Clarify Ambiguity:** If a user request conflicts with a rule in `standards/`, explicitly ask: "The standard says X, but you asked for Y. Should I update the standard or make an exception?"
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [../workflow/runtime-configuration.mdc](../workflow/runtime-configuration.mdc) - Environment expectations and runtime standards
+  - [../workflow/task-workflow.mdc](../workflow/task-workflow.mdc) - Development workflow integration
+  - [../workflow/auto-heal.mdc](../workflow/auto-heal.mdc) - Error recovery and auto-healing strategies
+- **Commands:**
+  - [launch.md](../../commands/launch.md) - Standardized application launch command
+  - [create-start-scripts.md](../../commands/create-start-scripts.md) - Generate launch scripts
+- **Standards:**
+  - [documentation-management.md](../../../standards/project-planning/documentation-management.md) - Documentation management standards
+  - [schema.md](../../../standards/database/schema.md) - Database schema conventions (referenced by enforcement rule)
+- **Domain Rules:**
+  - **Database:** [../database/schema-enforcement.mdc], [../database/data-model-integrity.mdc], [../database/impact-analysis.mdc]
+  - **API:** [../api/api-routes.mdc], [../api/api-models.mdc]
+  - **Frontend:** [../react/react-components.mdc], [../react/react-hooks.mdc]
+  - **Services:** [../services/service-patterns.mdc]
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically to all AI agent interactions with repositories.**
+
+**Agents should:**
+- Check `standards/` before generating code (don't guess conventions)
+- Use existing project structure instead of reinventing the wheel
+- Never commit secrets - always use environment variables
+- Update `CHANGELOG.md` when changing architectural patterns
+- Review & Update `README.md` when changes made outdate information within the README file
+- Follow all database standards and requirements in `.cursor/rules/database/schema-enforcement.mdc`
+- Analyze errors and clarify ambiguities instead of blindly retrying commands
+- Always use `launch` command or `start_app.sh` to launch applications (never use ad-hoc commands)
+- Commit uncommitted changes before completing tasks (see `workflow/task-workflow.mdc` Section 3.3)

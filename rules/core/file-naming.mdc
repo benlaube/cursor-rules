@@ -1,0 +1,178 @@
+---
+description: Auto-applied rule ensuring all files follow consistent naming conventions based on file type, language, and location to ensure predictability, maintainability, and consistency across the codebase. This rule applies when creating or modifying files throughout the repository and enforces naming patterns for directories, code files, test files, configuration files, and Cursor rules/commands. Agents must use kebab-case for directories and TS/JS files (except React components: PascalCase), use snake_case for Python files, use kebab-case for Cursor rules (.mdc) and commands (.md), and follow framework conventions when they conflict with general rules.
+version: 1.4.0
+created: 12-04-2025
+lastUpdated: 12-09-2025 12:15:00 EST
+alwaysApply: true
+globs:
+type: Auto-Applied Behavioral Rule - Ensures consistent file naming conventions
+applicability: When creating or modifying files
+dependencies: []
+relatedCommands: []
+relatedRules: [[../documentation/cursor-rule-creation.mdc], [../documentation/cursor-command-creation.mdc]]
+relatedStandards: [[project-planning/project-structure.md], [process/cursor-rules-standards.md]]
+---
+
+# File Naming Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Creating new files anywhere in the repository
+- Renaming existing files
+- Validating file names during development
+
+---
+
+## Core Principle
+
+**All files must follow consistent naming conventions based on their type, language, and location.** This ensures predictability, maintainability, and consistency across the codebase.
+
+**Source Standards:**
+- `standards/project-planning/project-structure.md` Section 5 - General naming conventions
+- `standards/process/cursor-rules-standards.md` Section 5 - Rule naming conventions
+
+---
+
+## Agent Responsibilities
+
+### 1. Directory Naming
+**Format:** `kebab-case` (e.g., `user-auth`, `data-processing`)
+- **Exception:** Follow framework conventions (Next.js `app/`, React `components/`)
+
+### 2. Code File Naming
+
+**TypeScript/JavaScript:** `kebab-case` (e.g., `user-service.ts`, `api-client.ts`)
+- **Exception:** React components use `PascalCase` (e.g., `LoginForm.tsx`)
+
+**Python:** `snake_case` (e.g., `user_service.py`, `api_client.py`)
+
+**Test Files:** Match source naming + test suffix
+- TS/JS: `user-service.test.ts` or `SubmitButton.test.tsx`
+- Python: `test_user_service.py` or `user_service_test.py`
+
+### 3. Cursor Rules and Commands
+
+**Rules:** `kebab-case.mdc` (e.g., `file-naming.mdc`, `task-workflow.mdc`)
+**Commands:** `kebab-case.md` (e.g., `pre-flight-check.md`, `project-audit.md`)
+
+### 4. Documentation Files (`docs/**/*.md`)
+
+**Primary Documents:** `UPPER_SNAKE_CASE.md` (e.g., `README.md`, `INDEX.md`, `SETUP_GUIDE.md`)
+- Used for main documents, indexes, and important references
+- Always use for: `README.md`, `INDEX.md`, `CHANGELOG.md`
+
+**Detailed/Versioned Documents:** `lower_snake_case.md` (e.g., `api_reference.md`, `user_guide.md`)
+- Used for detailed documentation, guides, and reference materials
+- Preferred for longer document names
+
+**Special Prefixes:**
+| Prefix | Purpose | Example |
+|--------|---------|---------|
+| `ADR_###_` | Architecture Decision Record | `ADR_001_database_choice.md` |
+| `RFC_###_` | Request for Comments | `RFC_001_new_feature.md` |
+| `RUNBOOK_` | Operational runbook | `RUNBOOK_database_failover.md` |
+| `SPEC_` | Feature specification | `SPEC_user_authentication.md` |
+
+**IMPORTANT:** Never include version numbers in filenames. Use metadata instead.
+- ✅ `api_reference.md` with `Version: 2.0` in metadata
+- ❌ `api_reference_v2.md`
+
+**Reference:** See `.cursor/rules/documentation/documentation-versioning.mdc` for complete versioning rules.
+
+### 5. Configuration and Module Files
+
+**Standard Config:** Follow tool/framework conventions (`package.json`, `tsconfig.json`, `.env.example`)
+**Custom Config:** `kebab-case` (e.g., `app-config.json`, `database-config.yml`)
+**Modules:** Directory `kebab-case`, files follow language conventions
+
+### 6. Special Cases
+
+- **Framework Requirements:** Follow framework conventions when they conflict (Next.js, React)
+- **Legacy Files:** Don't rename without explicit instruction; follow conventions for new files
+- **Generated Files:** Follow tool conventions (`dist/`, `build/`, `.next/`)
+
+---
+
+## Examples
+
+### Good Examples
+- TypeScript service: `src/services/user-auth-service.ts`
+- React component: `src/components/LoginForm.tsx`
+- Python module: `src/data_processing.py`
+- Cursor rule: `.cursor/rules/database/schema-enforcement.mdc`
+- Documentation (primary): `docs/INDEX.md`, `docs/README.md`
+- Documentation (detailed): `docs/api/api_reference.md`, `docs/guides/setup_guide.md`
+- ADR: `docs/architecture/decisions/ADR_001_database_choice.md`
+
+### Common Mistakes
+- ❌ Using `camelCase` or `PascalCase` for TS/JS files (except React components)
+- ❌ Using `kebab-case` for Python files
+- ❌ Using `kebab-case` for React components
+- ❌ Using `snake_case` for Cursor rules/commands
+- ❌ Using `kebab-case` for documentation files (use `UPPER_SNAKE_CASE` or `lower_snake_case`)
+- ❌ Including version numbers in documentation filenames (use metadata)
+- ❌ Not following framework conventions when they conflict
+
+**For comprehensive examples and patterns, see the source standards referenced above.**
+
+---
+
+## Validation Checklist
+
+**Code Files:**
+- [ ] TS/JS: `kebab-case` (except React: `PascalCase`)
+- [ ] Python: `snake_case`
+- [ ] Test files: Match source naming + test suffix
+
+**Cursor Files:**
+- [ ] Rules: `kebab-case.mdc`
+- [ ] Commands: `kebab-case.md`
+
+**Directories:**
+- [ ] All directories: `kebab-case` (except framework requirements)
+
+---
+
+## Integration with Other Rules
+
+This rule works with:
+- **`documentation/cursor-rule-creation.mdc`** - Rules must follow `kebab-case.mdc` naming
+- **`documentation/cursor-command-creation.mdc`** - Commands must follow `kebab-case.md` naming
+- **`standards/project-planning/project-structure.md`** - Implements directory/file naming (Section 5)
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [../documentation/cursor-rule-creation.mdc](../documentation/cursor-rule-creation.mdc) - Rule creation standards
+  - [../documentation/cursor-command-creation.mdc](../documentation/cursor-command-creation.mdc) - Command creation standards
+- **Standards:**
+  - [project-structure.md](../../../standards/project-planning/project-structure.md) - General naming conventions (Section 5)
+  - [cursor-rules-standards.md](../../../standards/process/cursor-rules-standards.md) - Rule naming conventions (Section 5)
+  - [module-structure.md](../../../standards/module-structure.md) - Module naming conventions
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when creating or modifying files throughout the repository.**
+
+**Agents should:**
+1. Use `kebab-case` for directories and TS/JS files (except React components: `PascalCase`)
+2. Use `snake_case` for Python files
+3. Use `kebab-case` for Cursor rules (`.mdc`) and commands (`.md`)
+4. Follow framework conventions when they conflict with general rules
+5. Verify naming before creating files
+
+**Quick reference:**
+- **Directories:** `kebab-case`
+- **TS/JS:** `kebab-case` (React: `PascalCase`)
+- **Python:** `snake_case`
+- **Rules:** `kebab-case.mdc`
+- **Commands:** `kebab-case.md`
+
+---
+
+*This rule ensures consistent, predictable file naming across the entire codebase. For comprehensive examples, see the source standards referenced above.*

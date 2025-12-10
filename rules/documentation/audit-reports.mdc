@@ -1,0 +1,353 @@
+---
+description: Standards for creating, naming, and saving audit reports. This rule applies when the user requests an audit, an audit command is executed, or the AI performs autonomous auditing. Ensures consistent audit report structure, naming, and storage location.
+version: 1.1.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 17:00:00 EST
+alwaysApply: false
+globs:
+  - **/docs/_reports/audits/**/*.md
+type: Documentation Standard Rule - Defines audit report creation and storage
+applicability: When creating audit reports (user request, audit command, or autonomous)
+dependencies: []
+relatedCommands:
+  - audit-project.md
+  - audit-security.md
+  - audit-documentation-rules-metadata.md
+relatedRules:
+  - documentation-metadata.mdc
+  - documentation-versioning.mdc
+relatedStandards:
+  - project-planning/documentation-management.md
+---
+
+# Audit Reports Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- User says "audit" in a prompt (e.g., "audit the codebase", "run an audit")
+- An audit command is executed (e.g., `audit-project`, `audit-security`)
+- The AI performs autonomous auditing as part of a workflow
+- Creating any document that reports audit findings
+
+---
+
+## Core Principle
+
+**All audit reports must be saved in a consistent location with standardized naming and structure.** This ensures:
+- Easy discovery of past audits
+- Consistent audit history
+- Comparable results over time
+- Clear audit trail for compliance
+
+---
+
+## Storage Location
+
+### Required Location
+
+**All audit reports MUST be saved to:**
+```
+docs/_reports/audits/
+```
+
+**Why `_reports/`?** The underscore prefix ensures the folder sorts to the top of the `/docs` directory for easy access.
+
+### Folder Structure
+
+```
+docs/
+└── _reports/
+    └── audits/
+        ├── README.md                           # Index of all audits
+        ├── project_audit_2025-12-09.md         # Project structure audit
+        ├── security_audit_2025-12-09.md        # Security audit
+        ├── documentation_audit_2025-12-09.md   # Documentation audit
+        ├── code_quality_audit_2025-12-01.md    # Code quality audit
+        └── dependency_audit_2025-11-15.md      # Dependency audit
+```
+
+---
+
+## Naming Convention
+
+### Required Format
+
+```
+{audit_type}_audit_{YYYY-MM-DD}.md
+```
+
+**Components:**
+- `{audit_type}` - Type of audit in `snake_case`
+- `_audit_` - Literal string (required)
+- `{YYYY-MM-DD}` - Date of audit
+
+### Audit Type Examples
+
+| Audit Type | Filename |
+|------------|----------|
+| Project Structure | `project_audit_2025-12-09.md` |
+| Security | `security_audit_2025-12-09.md` |
+| Documentation | `documentation_audit_2025-12-09.md` |
+| Code Quality | `code_quality_audit_2025-12-09.md` |
+| Dependencies | `dependency_audit_2025-12-09.md` |
+| Database | `database_audit_2025-12-09.md` |
+| Performance | `performance_audit_2025-12-09.md` |
+| Accessibility | `accessibility_audit_2025-12-09.md` |
+| API | `api_audit_2025-12-09.md` |
+| Custom | `{description}_audit_2025-12-09.md` |
+
+### Multiple Audits Same Day
+
+If running multiple audits of the same type on the same day, append a sequence number:
+```
+security_audit_2025-12-09_01.md
+security_audit_2025-12-09_02.md
+```
+
+---
+
+## Report Structure
+
+### Required Template
+
+Every audit report MUST follow this structure:
+
+```markdown
+# {Audit Type} Audit Report
+
+## Metadata
+- **Status:** Active
+- **Created:** {YYYY-MM-DD}
+- **Last Updated:** {YYYY-MM-DD HH:MM:SS EST}
+- **Version:** 1.0
+- **Audit Type:** {Type}
+- **Auditor:** AI Agent / {Human Name}
+- **Scope:** {What was audited}
+- **Dependencies:** None
+
+---
+
+## Executive Summary
+
+Brief overview of findings (2-3 sentences):
+- Overall status: ✅ Healthy / ⚠️ Needs Attention / ❌ Critical Issues
+- Key findings count: X issues found (Y critical, Z warnings)
+- Primary recommendation
+
+---
+
+## Audit Scope
+
+### What Was Audited
+- List of directories/files/systems audited
+
+### What Was NOT Audited
+- Any exclusions or out-of-scope items
+
+### Methodology
+- How the audit was conducted
+- Tools or commands used
+
+---
+
+## Findings Summary
+
+| Severity | Count | Category |
+|----------|-------|----------|
+| 🔴 Critical | X | {category} |
+| 🟠 High | X | {category} |
+| 🟡 Medium | X | {category} |
+| 🔵 Low | X | {category} |
+| ✅ Pass | X | {category} |
+
+---
+
+## Detailed Findings
+
+### Critical Issues (🔴)
+
+#### Issue 1: {Title}
+- **Location:** {file/path}
+- **Description:** {What's wrong}
+- **Impact:** {Why it matters}
+- **Recommendation:** {How to fix}
+- **Priority:** Immediate
+
+### High Priority Issues (🟠)
+
+[Same format as Critical]
+
+### Medium Priority Issues (🟡)
+
+[Same format as Critical]
+
+### Low Priority Issues (🔵)
+
+[Same format as Critical]
+
+---
+
+## Passed Checks (✅)
+
+List of items that passed validation:
+- ✅ Check 1
+- ✅ Check 2
+- ✅ Check 3
+
+---
+
+## Recommendations
+
+### Immediate Actions (This Sprint)
+1. {Action item}
+2. {Action item}
+
+### Short-term Actions (Next 30 Days)
+1. {Action item}
+2. {Action item}
+
+### Long-term Actions (Next Quarter)
+1. {Action item}
+2. {Action item}
+
+---
+
+## Next Steps
+
+1. Review findings with team
+2. Create tickets for critical issues
+3. Schedule follow-up audit for {date}
+
+---
+
+## Appendix
+
+### Raw Output / Logs
+{Include relevant command output if applicable}
+
+### Related Documents
+- [Previous Audit](./previous_audit_YYYY-MM-DD.md)
+- [Related Standard](../../standards/relevant-standard.md)
+```
+
+---
+
+## Audit Index (README.md)
+
+### Maintain an Index
+
+The `docs/_reports/audits/README.md` file MUST track all audits:
+
+```markdown
+# Audit Reports Index
+
+## Metadata
+- **Last Updated:** {Date}
+- **Total Audits:** {Count}
+
+## Recent Audits
+
+| Date | Type | Status | Findings | Report |
+|------|------|--------|----------|--------|
+| 2025-12-09 | Security | ✅ Healthy | 0 critical | [View](./security_audit_2025-12-09.md) |
+| 2025-12-09 | Project | ⚠️ Needs Attention | 2 high | [View](./project_audit_2025-12-09.md) |
+| 2025-12-01 | Documentation | ✅ Healthy | 0 critical | [View](./documentation_audit_2025-12-01.md) |
+
+## Audits by Type
+
+### Security Audits
+- [2025-12-09](./security_audit_2025-12-09.md) - ✅ Healthy
+- [2025-11-15](./security_audit_2025-11-15.md) - ✅ Healthy
+
+### Project Audits
+- [2025-12-09](./project_audit_2025-12-09.md) - ⚠️ Needs Attention
+
+## Audit Schedule
+
+| Audit Type | Frequency | Next Due |
+|------------|-----------|----------|
+| Security | Monthly | 2026-01-09 |
+| Project | Quarterly | 2026-03-09 |
+| Documentation | Monthly | 2026-01-09 |
+```
+
+---
+
+## Agent Behavior
+
+### When User Requests Audit
+
+1. Determine audit type from context
+2. Execute appropriate audit checks
+3. Create report using template above
+4. Save to `docs/_reports/audits/{type}_audit_{date}.md`
+5. Update `docs/_reports/audits/README.md` index
+6. Report completion to user with link to report
+
+### When Running Audit Command
+
+1. Follow command-specific instructions
+2. Generate report using this rule's template
+3. Save to correct location
+4. Update index
+
+### Autonomous Auditing
+
+When performing audits as part of workflow (e.g., pre-flight check):
+1. If generating a formal report, follow this rule
+2. If just checking status, no report needed
+3. If findings are significant, consider generating report
+
+---
+
+## Validation Checklist
+
+Before saving an audit report:
+
+- [ ] Saved to `docs/_reports/audits/`
+- [ ] Filename follows `{type}_audit_{YYYY-MM-DD}.md` format
+- [ ] Report uses required template structure
+- [ ] Executive summary present
+- [ ] Findings categorized by severity
+- [ ] Recommendations included
+- [ ] Metadata complete
+- [ ] Index updated in `README.md`
+
+---
+
+## Related Files
+
+- **Commands:**
+  - [audit-project.md](../../.cursor/commands/audit-project.md) - Project structure audit
+  - [audit-security.md](../../.cursor/commands/audit-security.md) - Security audit
+  - [audit-documentation-rules-metadata.md](../../.cursor/commands/audit-documentation-rules-metadata.md) - Documentation audit
+- **Rules:**
+  - [documentation-metadata.mdc](./documentation-metadata.mdc) - Metadata requirements
+  - [review-reports.mdc](./review-reports.mdc) - Review report standards
+  - [summary-reports.mdc](./summary-reports.mdc) - Summary report standards
+- **Standards:**
+  - [documentation-management.md](../../standards/project-planning/documentation-management.md) - Documentation standards
+
+---
+
+## How to Use This Rule
+
+**This rule applies when creating any audit report.**
+
+**Agents should:**
+1. Save all audit reports to `docs/_reports/audits/`
+2. Use naming format: `{type}_audit_{YYYY-MM-DD}.md`
+3. Follow the required template structure
+4. Include severity-categorized findings
+5. Update the audit index README.md
+6. Link to previous audits for comparison
+
+**Trigger words:**
+- "audit", "run audit", "perform audit"
+- "check", "validate", "verify" (in audit context)
+- Audit command execution
+
+---
+
+*This rule ensures consistent, discoverable, and comparable audit reports across all projects.*

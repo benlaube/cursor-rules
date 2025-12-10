@@ -1,0 +1,199 @@
+---
+description: Orchestrates the complete development lifecycle from pre-flight to post-flight. This auto-applied workflow rule coordinates all development phases including git operations, launch procedures, documentation creation workflow, and task completion. Agents must follow the pre-flight validation process, implement atomic changes with proper documentation, check temporary document workflow before creating analysis/status documents, and complete post-flight validation before marking tasks complete.
+version: 2.0.0
+created: 12-04-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: true
+globs:
+type: Workflow Integration Rule - Manages task lifecycle and development workflow
+applicability: All development tasks
+dependencies: []
+relatedCommands: [[create-start-scripts.md], [project-audit.md], [audit-security.md]]
+relatedRules: [[pre-flight-check.mdc], [pr-review-check.mdc], [auto-heal.mdc], [workflow-variants.mdc], [runtime-configuration.mdc], [../core/date-time.mdc], [../core/dry-principle.mdc], [../documentation/temporary-document-workflow.mdc], [../documentation/documentation-metadata.mdc], [../documentation/documentation-dependency-tracking.mdc], [../git/git-workflow-integration.mdc], [../git/git-branch-naming.mdc], [../git/git-commit-messages.mdc], [../git/git-pr-preparation.mdc]]
+relatedStandards: [[project-planning/documentation-management.md], [process/checklists/pre_flight_checklist.md], [process/checklists/pr_review_checklist.md]]
+---
+
+# Task Workflow Rule
+
+## 1. Before Starting a Task (Pre-Flight)
+
+**Pre-flight validation runs automatically** (see `.cursor/rules/workflow/pre-flight-check.mdc`).
+
+Before writing code, the agent MUST:
+1. **Pre-Flight Validation:** The `pre-flight-check.mdc` rule automatically validates:
+   - Git status (clean working tree, synced with remote) - See `../git/git-workflow-integration.mdc`
+   - Dependencies (installed and up to date)
+   - Environment (.env configured, secrets loaded)
+   - Baseline integrity (tests pass, build succeeds, linter clean)
+   - See `standards/process/checklists/pre_flight_checklist.md` for complete checklist
+2. **Check Structure:** Verify project follows `standards/project-structure.md`
+3. **Verify Environment:** Ensure app is launchable via `.cursor/commands/launch.md`. If `start_app.sh` doesn't exist, run `create-start-scripts` command
+4. **Temporal Awareness:** For time-sensitive tasks, verify current date using `date` command (see `.cursor/rules/core/date-time.mdc`)
+5. **Check Project Tasks:** If a project management integration exists:
+   - Query for open tasks linked to this project
+   - Review any high-priority or in-progress tasks that might be relevant
+
+## 2. During Development
+
+1. **Atomic Changes:** Make small, testable changes.
+2. **DRY Principle:** Before creating new content, search for existing solutions. Reference existing standards/rules/modules instead of duplicating. See `.cursor/rules/core/dry-principle.mdc` for guidance.
+3. **Self-Correction:** If a command fails, attempt to self-heal (see `.cursor/rules/workflow/auto-heal.mdc`) before asking the user.
+4. **Tool Usage:** Use specialized tools (`read_file`, `grep`) over generic terminal commands.
+5. **Function Documentation:** Every function must have comments with description and dependencies (per user rules). Use structured docstrings for non-trivial functions.
+6. **Impact Analysis (MANDATORY before data changes):** Run Impact Analysis (`.cursor/rules/database/impact-analysis.mdc`) on target domain objects before editing data-layer files.
+7. **Data Model & Schema Requirements:** When creating/modifying database tables or data-layer files:
+   - **CRITICAL:** Read `standards/database/schema.md`, `.cursor/rules/database/schema-enforcement.mdc`, `.cursor/rules/database/data-model-integrity.mdc`, and `.cursor/rules/database/impact-analysis.mdc` before any database or model work
+   - Ensure tables and fields have descriptions (via `COMMENT ON` statements) - **MANDATORY**
+   - Use descriptive names (not abbreviated)
+   - Include `created_at` and `updated_at` columns
+   - Set up activity logging triggers where appropriate
+   - Update `data_model_map.json` with version bump and `last_updated`
+   - Run targeted tests for affected objects and treat failures as blockers
+8. **Documentation Creation (CRITICAL):** Before creating any documentation file:
+   - Check if it's a temporary document type: SUMMARY, REPORT, AUDIT, STATUS, ANALYSIS, PLAN
+   - If yes: Follow `.cursor/rules/documentation/temporary-document-workflow.mdc` (MUST prompt user before saving)
+   - If no: Follow `.cursor/rules/documentation/documentation-metadata.mdc` (use proper metadata)
+   - **Never save analysis/status/plan documents without prompting user for location**
+
+## 3. After Completing a Task (Post-Flight)
+
+**PR review validation runs automatically** (see `.cursor/rules/workflow/pr-review-check.mdc`).
+
+Before confirming completion:
+1. **PR Review Validation:** The `pr-review-check.mdc` rule automatically validates:
+   - Code quality (lint, format, types)
+   - Functionality (build, tests)
+   - Security (no secrets, input validation)
+   - Documentation (functions documented, CHANGELOG updated)
+   - See `standards/process/checklists/pr_review_checklist.md` for complete checklist
+2. **Update Docs:** 
+   - Update `CHANGELOG.md` for user-facing changes
+   - For database/data-model changes: update `CHANGELOG-DATABASE.md` per `.cursor/rules/database/schema-enforcement.mdc`
+   - Update relevant `standards/` if architecture changed
+3. **Commit Uncommitted Changes (if any):**
+   - Check for uncommitted changes: `git status --porcelain`
+   - If uncommitted changes exist:
+     - Stage all changes: `git add .`
+     - Generate semantic commit message from changes (follow Conventional Commits format)
+     - Commit: `git commit -m "{type}({scope}): {description}"`
+     - Validate commit message follows standards (see `../git/git-commit-messages.mdc`)
+4. **Verify Launch:** Run `launch` command one last time to ensure no regression.
+5. **Launch & Debug Dev Server:** After completing a task or integration:
+   - Launch the development server so the user can see changes and test them
+   - If errors occur during launch, use auto-heal strategies until the dev environment is healthy
+6. **Push to Remote (if ready for PR):**
+   - Only push if user requests PR or explicitly asks to push
+   - Validate branch and commits before pushing (see `../git/git-pr-preparation.mdc`)
+   - Push branch: `git push -u origin {branch-name}` (if not already pushed)
+
+## 4. Periodic Maintenance & Audits
+
+Before major releases, refactoring, or weekly/monthly for active projects, run periodic audits:
+
+- **Project Audit:** Run `project-audit` command for full project structure validation
+- **Security Audit:** Run `security_audit` command for security vulnerabilities scan
+- **Full Health Check:** Run `full-project-health-check` meta-command to run all audits together
+
+**When to Run:**
+- When onboarding a new repository
+- Before major refactoring
+- Before major releases
+- Weekly/monthly for active projects
+
+## Visual Workflow
+
+```mermaid
+flowchart TD
+    Start([Start task]) --> PreFlight[Pre-flight validation\n git state, env, deps, baseline tests]
+    PreFlight -->|fails| Heal[Auto-heal / fix blockers\n re-run checks]
+    Heal --> PreFlight
+    PreFlight -->|pass| Dev[During development\natomic changes, DRY, impact analysis]
+    Dev --> Post[Post-flight\nPR review checks, docs, commit]
+    Post --> Audits[Periodic audits\n project, security, health checks]
+    Audits --> Done([Ready for PR / merge])
+```
+
+## 5. Documentation & Versioning
+
+- **Documentation Standards:** Follow `standards/project-planning/documentation-management.md` for documentation management rules
+- **Changelogs:** 
+  - Update `CHANGELOG.md` for user-facing changes
+  - For database/data-model changes: update `CHANGELOG-DATABASE.md`
+- **Versioning:** If editing a standard or documentation file, increment the version metadata at the top of the file (see `.cursor/rules/core/version-management.mdc`)
+- **New Features:** If you added a new feature, ensure it is documented in `standards/` or `docs/`
+
+## 6. Workflow Variants
+
+For specialized task types, use workflow variants that modify the standard workflow:
+
+| Variant | When to Use | Rule |
+|---------|-------------|------|
+| **Emergency/Hotfix** | Production incidents, urgent fixes | `variants/variant-emergency.mdc` |
+| **Documentation-Only** | No code changes, docs only | `variants/variant-documentation.mdc` |
+| **Database Migration** | Schema changes, data migrations | `variants/variant-database.mdc` |
+| **Security Patch** | Vulnerabilities, access control | `variants/variant-security.mdc` |
+| **Standard** | All other tasks | This rule (default) |
+
+**Selection Guide:** See `workflow-variants.mdc` for the decision tree and detailed guidance.
+
+## 7. Related Rules & Standards
+
+This rule integrates with the following related rules and standards:
+
+- **`.cursor/rules/workflow/workflow-variants.mdc`** - Workflow variant router and selection
+- **`.cursor/rules/workflow/variants/`** - Individual workflow variant rules
+- **`.cursor/rules/workflow/auto-heal.mdc`** - Error recovery strategies
+- **`.cursor/rules/workflow/runtime-configuration.mdc`** - Runtime environment configuration
+- **`.cursor/rules/documentation/documentation-dependency-tracking.mdc`** - Documentation dependency tracking
+- **`.cursor/rules/git/git-workflow-integration.mdc`** - Git workflow coordination
+- **`.cursor/rules/git/git-branch-naming.mdc`** - Branch naming conventions
+- **`.cursor/rules/git/git-commit-messages.mdc`** - Conventional Commits format
+- **`.cursor/rules/git/git-pr-preparation.mdc`** - PR preparation and validation
+- **`standards/project-planning/documentation-management.md`** - Documentation management standards
+
+---
+
+## Related Files
+
+- **Commands:**
+  - [create-start-scripts.md](../../commands/create-start-scripts.md) - Generate launch scripts
+  - [project-audit.md](../../commands/project-audit.md) - Project structure validation
+  - [audit-security.md](../../commands/audit-security.md) - Security vulnerabilities scan
+- **Rules:**
+  - [workflow-variants.mdc](./workflow-variants.mdc) - Workflow variant router
+  - [variants/variant-emergency.mdc](./variants/variant-emergency.mdc) - Emergency/Hotfix workflow
+  - [variants/variant-documentation.mdc](./variants/variant-documentation.mdc) - Documentation-only workflow
+  - [variants/variant-database.mdc](./variants/variant-database.mdc) - Database migration workflow
+  - [variants/variant-security.mdc](./variants/variant-security.mdc) - Security patch workflow
+  - [auto-heal.mdc](./auto-heal.mdc) - Error recovery strategies
+  - [runtime-configuration.mdc](./runtime-configuration.mdc) - Runtime environment configuration
+  - [../core/date-time.mdc](../core/date-time.mdc) - Date and time awareness
+  - [../git/git-workflow-integration.mdc](../git/git-workflow-integration.mdc) - Git workflow coordination
+- **Standards:**
+  - [documentation-management.md](../../../standards/project-planning/documentation-management.md) - Documentation standards
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically throughout the development lifecycle.**
+
+**Agents should follow this workflow:**
+
+**Before Starting:**
+1. Run `pre-flight-check` command to validate environment
+2. Launch dev environment with `./start_app.sh` (or generate with `create-start-scripts`)
+
+**During Development:**
+1. Make atomic changes
+2. Self-correct using `auto-heal.mdc` strategies
+3. Document functions and database schema
+
+**After Completing:**
+1. Run `pr-review-check` command
+2. Update `CHANGELOG.md` and relevant docs
+3. Launch & debug dev server
+
+**Periodic Maintenance:**
+- Run `project-audit` before refactoring or releases
+- Run `security_audit` for security-sensitive changes

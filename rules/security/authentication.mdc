@@ -1,0 +1,178 @@
+---
+description: Authentication implementation standards for secure user authentication flows. This rule covers session management, JWT handling, OAuth integration, password security, MFA implementation, and authentication error handling. Agents must implement secure session management, use HttpOnly cookies for tokens, validate JWT signatures and expiration, implement proper password hashing, and never expose sensitive auth data in logs or errors.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/auth/**,**/login/**,**/session/**
+type: Security Rule - Authentication standards
+applicability: Authentication implementation and review
+dependencies: []
+relatedCommands: [[audit-security.md]]
+relatedRules: [[authorization.mdc], [secrets-management.mdc], [../supabase/supabase-auth.mdc]]
+relatedStandards: [[security/access-control.md]]
+---
+
+# Authentication Standards Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Implementing user authentication flows
+- Working with sessions, tokens, or credentials
+- Integrating OAuth providers
+- Handling password operations
+- Reviewing authentication code
+
+---
+
+## Core Principles
+
+1. **Never trust client data** - Always validate server-side
+2. **Secure by default** - Opt-in to less secure options, not opt-out
+3. **Defense in depth** - Multiple layers of protection
+4. **Fail securely** - Errors should not leak information
+
+---
+
+## Authentication Standards
+
+### 1. Session Management
+
+**Requirements:**
+- Use secure, HttpOnly cookies for session tokens
+- Implement session expiration (max 24h for sensitive apps)
+- Regenerate session ID after login
+- Invalidate sessions on logout and password change
+
+```typescript
+// Good: Secure cookie configuration
+const sessionCookie = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  path: '/',
+};
+```
+
+### 2. JWT Handling
+
+**Requirements:**
+- Validate signature on every request
+- Check expiration time (exp claim)
+- Use short-lived access tokens (15-60 min)
+- Implement refresh token rotation
+- Never store JWT in localStorage (use HttpOnly cookies)
+
+```typescript
+// Good: JWT validation
+async function validateToken(token: string): Promise<User | null> {
+  try {
+    const payload = await jwt.verify(token, SECRET_KEY);
+    if (payload.exp < Date.now() / 1000) {
+      return null; // Token expired
+    }
+    return payload as User;
+  } catch {
+    return null; // Invalid token
+  }
+}
+```
+
+### 3. Password Security
+
+**Requirements:**
+- Use bcrypt, argon2, or scrypt for hashing
+- Minimum 12 rounds for bcrypt
+- Enforce minimum password length (12+ characters)
+- Check against breached password databases
+- Never log or expose passwords
+
+```typescript
+// Good: Password hashing
+import bcrypt from 'bcrypt';
+
+const SALT_ROUNDS = 12;
+
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, SALT_ROUNDS);
+}
+
+async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
+```
+
+### 4. OAuth Integration
+
+**Requirements:**
+- Validate state parameter to prevent CSRF
+- Verify token with provider
+- Request minimal scopes
+- Handle token refresh securely
+- Store provider tokens encrypted
+
+### 5. Multi-Factor Authentication
+
+**Requirements:**
+- Implement TOTP (time-based one-time passwords)
+- Provide backup codes
+- Rate limit MFA attempts
+- Allow MFA recovery with verification
+
+### 6. Error Handling
+
+**Requirements:**
+- Use generic error messages (don't reveal user existence)
+- Log authentication failures (without credentials)
+- Implement rate limiting
+- Account lockout after failed attempts
+
+```typescript
+// Good: Generic error message
+throw new AuthError('Invalid credentials'); // Don't say "user not found" or "wrong password"
+
+// Good: Rate limiting
+const rateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per window
+  message: 'Too many login attempts, please try again later',
+});
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Storing passwords in plain text
+- ❌ Using MD5 or SHA1 for password hashing
+- ❌ JWT in localStorage
+- ❌ Long-lived access tokens (>1 hour)
+- ❌ Revealing whether user exists in error messages
+- ❌ No rate limiting on auth endpoints
+- ❌ Logging credentials or tokens
+
+---
+
+## Security Checklist
+
+- [ ] Passwords hashed with bcrypt/argon2 (12+ rounds)
+- [ ] JWT stored in HttpOnly cookies
+- [ ] Session tokens regenerated on login
+- [ ] Rate limiting on auth endpoints
+- [ ] Generic error messages
+- [ ] CSRF protection enabled
+- [ ] MFA available for sensitive accounts
+- [ ] Auth failures logged (without credentials)
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [authorization.mdc](./authorization.mdc) - Authorization after authentication
+  - [secrets-management.mdc](./secrets-management.mdc) - Credential storage
+  - [../supabase/supabase-auth.mdc](../supabase/supabase-auth.mdc) - Supabase Auth specifics
+- **Standards:**
+  - [access-control.md](../../standards/security/access-control.md) - Access control standards

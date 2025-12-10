@@ -1,0 +1,240 @@
+---
+description: Supabase Row Level Security (RLS) policy standards for secure data access. This rule covers policy design, common patterns, testing strategies, and debugging. Agents must enable RLS on all tables, implement proper policies for each operation, test policies thoroughly, and follow least-privilege principles.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/*.sql,**/migrations/**
+type: Tech Stack Rule - Supabase RLS
+applicability: Supabase database security
+dependencies: []
+relatedCommands: [[audit-security.md]]
+relatedRules: [[supabase-client.mdc], [../database/schema-enforcement.mdc], [../security/authorization.mdc]]
+relatedStandards: [[security/access-control.md]]
+---
+
+# Supabase RLS Policy Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Creating database tables
+- Implementing access control
+- Writing RLS policies
+- Debugging permission issues
+
+---
+
+## Core Principles
+
+1. **Enable RLS on all tables** - No exceptions
+2. **Deny by default** - Explicit allow policies
+3. **Least privilege** - Minimum necessary access
+4. **Test thoroughly** - Verify all policies
+
+---
+
+## Basic Policies
+
+### Enable RLS
+
+```sql
+-- ALWAYS enable RLS on new tables
+CREATE TABLE posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  author_id UUID REFERENCES auth.users(id),
+  title TEXT NOT NULL,
+  content TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+```
+
+### Owner-Based Access
+
+```sql
+-- Users can read their own posts
+CREATE POLICY "Users can read own posts"
+  ON posts FOR SELECT
+  USING (auth.uid() = author_id);
+
+-- Users can insert their own posts
+CREATE POLICY "Users can create posts"
+  ON posts FOR INSERT
+  WITH CHECK (auth.uid() = author_id);
+
+-- Users can update their own posts
+CREATE POLICY "Users can update own posts"
+  ON posts FOR UPDATE
+  USING (auth.uid() = author_id)
+  WITH CHECK (auth.uid() = author_id);
+
+-- Users can delete their own posts
+CREATE POLICY "Users can delete own posts"
+  ON posts FOR DELETE
+  USING (auth.uid() = author_id);
+```
+
+---
+
+## Advanced Patterns
+
+### Role-Based Access
+
+```sql
+-- Helper function to get user role
+CREATE OR REPLACE FUNCTION auth.user_role()
+RETURNS TEXT AS $$
+  SELECT COALESCE(
+    (auth.jwt() -> 'user_metadata' ->> 'role'),
+    'user'
+  )
+$$ LANGUAGE sql STABLE;
+
+-- Admin can read all posts
+CREATE POLICY "Admin can read all posts"
+  ON posts FOR SELECT
+  USING (auth.user_role() = 'admin');
+```
+
+### Team/Organization Access
+
+```sql
+-- Users can read posts from their organization
+CREATE POLICY "Users can read org posts"
+  ON posts FOR SELECT
+  USING (
+    author_id IN (
+      SELECT user_id FROM organization_members
+      WHERE organization_id = (
+        SELECT organization_id FROM organization_members
+        WHERE user_id = auth.uid()
+      )
+    )
+  );
+```
+
+### Public/Private Content
+
+```sql
+-- Anyone can read published posts
+CREATE POLICY "Public can read published posts"
+  ON posts FOR SELECT
+  USING (published = true);
+
+-- Authors can read their drafts
+CREATE POLICY "Authors can read own drafts"
+  ON posts FOR SELECT
+  USING (
+    published = false 
+    AND author_id = auth.uid()
+  );
+```
+
+---
+
+## Testing Policies
+
+### Manual Testing
+
+```sql
+-- Test as specific user
+SET request.jwt.claims TO '{"sub": "user-uuid-here", "role": "authenticated"}';
+
+-- Try query
+SELECT * FROM posts;
+
+-- Reset
+RESET request.jwt.claims;
+```
+
+### Automated Tests
+
+```typescript
+describe('RLS Policies', () => {
+  it('should allow users to read their own posts', async () => {
+    const { data, error } = await userClient
+      .from('posts')
+      .select('*')
+      .eq('author_id', userId);
+    
+    expect(error).toBeNull();
+    expect(data).toHaveLength(expectedCount);
+  });
+  
+  it('should prevent users from reading others posts', async () => {
+    const { data, error } = await userClient
+      .from('posts')
+      .select('*')
+      .eq('author_id', otherUserId);
+    
+    expect(data).toHaveLength(0);
+  });
+});
+```
+
+---
+
+## Common Mistakes
+
+### Forgetting WITH CHECK
+
+```sql
+-- Bad: Missing WITH CHECK allows setting any author_id
+CREATE POLICY "Bad insert policy"
+  ON posts FOR INSERT
+  WITH CHECK (true);
+
+-- Good: Verify author_id matches user
+CREATE POLICY "Good insert policy"
+  ON posts FOR INSERT
+  WITH CHECK (auth.uid() = author_id);
+```
+
+### Missing UPDATE restrictions
+
+```sql
+-- Bad: User could change author_id to another user
+CREATE POLICY "Bad update policy"
+  ON posts FOR UPDATE
+  USING (auth.uid() = author_id);
+
+-- Good: Prevent changing author_id
+CREATE POLICY "Good update policy"
+  ON posts FOR UPDATE
+  USING (auth.uid() = author_id)
+  WITH CHECK (auth.uid() = author_id);
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ RLS disabled on tables
+- ❌ `USING (true)` policies without reason
+- ❌ Missing WITH CHECK on INSERT/UPDATE
+- ❌ Complex nested subqueries
+- ❌ No testing of policies
+
+---
+
+## Checklist
+
+- [ ] RLS enabled on all tables
+- [ ] SELECT policies defined
+- [ ] INSERT policies with WITH CHECK
+- [ ] UPDATE policies with USING and WITH CHECK
+- [ ] DELETE policies defined
+- [ ] Policies tested for each role
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [supabase-client.mdc](./supabase-client.mdc) - Client usage
+  - [../database/schema-enforcement.mdc](../database/schema-enforcement.mdc) - Schema standards
+  - [../security/authorization.mdc](../security/authorization.mdc) - Authorization patterns
+- **Standards:**
+  - [access-control.md](../../standards/security/access-control.md) - Access control standards
