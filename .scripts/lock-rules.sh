@@ -5,8 +5,8 @@
 # that these are shared files managed in the cursor-rules repository.
 # 
 # Usage:
-#   .cursor/scripts/lock-rules.sh        # Lock files (read-only)
-#   .cursor/scripts/lock-rules.sh unlock  # Unlock files (writable)
+#   .cursor/.scripts/lock-rules.sh        # Lock files (read-only)
+#   .cursor/.scripts/lock-rules.sh unlock  # Unlock files (writable)
 
 set -e
 
@@ -55,6 +55,6 @@ else
     
     echo "✅ Locked $RULES_COUNT rules and $COMMANDS_COUNT commands (read-only)"
     echo ""
-    echo "💡 To unlock for editing: .cursor/scripts/lock-rules.sh unlock"
+    echo "💡 To unlock for editing: .cursor/.scripts/lock-rules.sh unlock"
     echo "💡 To make changes: Edit in cursor-rules repository and update submodule"
 fi
