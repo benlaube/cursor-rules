@@ -1,0 +1,135 @@
+---
+description: Enforces data model map updates, impact analysis, and structured documentation for all data-layer changes
+version: 1.0.0
+created: 12-04-2025
+lastUpdated: 12-04-2025 18:20:44 EST
+alwaysApply: false
+globs: **/db/**, **/schema/**, **/models/**, **/types/**, **/api/**, **/components/**, **/services/**
+type: Workflow Enforcement Rule - Data model integrity
+applicability: When modifying any data-layer files or files that consume domain data
+dependencies: []
+relatedCommands: [update-data-model-map.md]
+relatedRules: [impact-analysis.mdc, database-schema-enforcement.mdc, ai-interaction-rules.mdc, task-workflow.mdc]
+relatedStandards: [database/data-model-map-standard.md, database/schema.md, project-planning/project-structure.md, project-planning/documentation-management.md]
+---
+
+# Data Model Integrity Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when editing any data-layer files or files that consume domain data:
+- `/db/**`, `/schema/**`, `/models/**`, `/types/**`, `/api/**`, `/components/**`, `/services/**`
+- Database migrations (`**/migrations/**/*.sql`, `supabase/migrations/**/*.sql`)
+- Shared domain types, DTOs, API contracts
+- Frontend components or services that read/write domain objects
+
+---
+
+## Core Principle
+
+**No data-layer change without synchronized model map, impact analysis, and tests.** All data relationships must be reflected in `data_model_map.json`, with versioned updates and impact documentation to prevent silent breakage.
+
+---
+
+## Agent Responsibilities
+
+### 1) Before Making Changes
+- **Run ImpactAnalysis:** Execute the Impact Analysis rule/command (`impact-analysis.mdc`) on the target domain objects.
+- **Review data_model_map.json:** Read current entries, notes, and usages for affected objects.
+- **Plan updates:** Identify which objects/fields/usages will change.
+
+### 2) During Changes
+- Apply code/schema changes.
+- Maintain structured file headers (see Section 5) and function docstrings (Section 6).
+
+### 3) After Changes (Mandatory)
+1. **Update data_model_map.json** (and regenerate `data_model_map.md` if used):
+   - Add/modify objects, fields, definitions, usages, and notes.
+   - Bump `version` (semver) and update `last_updated` (EST).
+2. **Record impact notes** for critical effects (filters, notifications, cross-object dependencies).
+3. **Add CHANGELOG entries** if schema changed (see `database-schema-enforcement.mdc`).
+4. **Run tests (blockers):**
+   - Type check (`tsc --noEmit`, `pyright`/`mypy`, etc.).
+   - Targeted tests tagged with affected objects (e.g., `@lead`, `@orders`).
+   - Treat failures as blockers.
+5. **Ensure CI compliance:** `data_model_map.json` must be updated whenever data-layer files change; CI should fail otherwise.
+
+---
+
+## Enforcement
+
+Changes to data-layer files **must** include:
+- Updated `data_model_map.json` (and optional `data_model_map.md`).
+- Version bump and `last_updated` refresh in the map.
+- Impact notes for affected objects.
+- Structured header comment added/updated in touched files.
+- Docstrings for non-trivial functions.
+- Targeted tests executed and passing.
+
+CI/Pre-commit MUST fail when:
+- Data-layer files change without a corresponding `data_model_map.json` change.
+- `data_model_map.json` is missing or invalid (JSON parse fails, missing version/last_updated).
+
+---
+
+## Structured File Header Requirements (Required on significant files)
+
+Every significant data-layer file (models, services, controllers, key components, API handlers) MUST start with:
+```
+// File: src/models/Lead.ts
+// Role: Domain model for Lead entity
+// Owns data: Lead (id, email, status, created_at, updated_at)
+// Reads data: Lead, Order (joins)
+// Called by: src/app/api/leads/route.ts
+// Calls: db client, lead-notifications service
+// Last updated: 12-04-2025 18:20:44 EST
+// Version: 0.1.0
+// Change log:
+// - 2025-12-04 v0.2.1: Added 'warm' status, affects LeadTable filters and notifications
+// - 2025-12-01 v0.2.0: Added status field
+```
+
+---
+
+## Function/Method Docstrings (Required for non-trivial functions)
+
+Use a structured docstring with these fields:
+- **Purpose:** What the function does in plain language.
+- **Inputs:** Typed parameters and meaning.
+- **Outputs:** Return type and meaning.
+- **Side effects:** Writes, external calls, emitted events.
+- **Dependencies:** Other modules/services relied on.
+- **Usage:** Where/how it is called.
+
+---
+
+## Impact Analysis (Pre-change)
+
+Before editing any domain object:
+1. Search the repo for the object name.
+2. Summarize impact across models/schemas, API endpoints, components, and services.
+3. Use the summary to guide safe changes and update notes in `data_model_map.json`.
+
+---
+
+## Integration with Other Rules and Standards
+
+- **Standards:** `database/data-model-map-standard.md`, `database/schema.md`, `project-planning/documentation-management.md`
+- **Rules:** `impact-analysis.mdc`, `database-schema-enforcement.mdc`, `ai-interaction-rules.mdc`, `task-workflow.mdc`
+- **Command:** `update-data-model-map.md`
+
+---
+
+## Validation Checklist
+- [ ] Ran ImpactAnalysis before changes
+- [ ] Updated `data_model_map.json` (version + last_updated bumped)
+- [ ] Regenerated `data_model_map.md` (if used)
+- [ ] Added/updated impact notes
+- [ ] Added/updated structured file headers
+- [ ] Added docstrings to non-trivial functions
+- [ ] Ran type checks and tagged tests for affected objects
+- [ ] CI/pre-commit passes data model map validation
+
+---
+
+*This rule makes `data_model_map.json` the enforced source of truth for all domain data objects and their usage, preventing isolated changes that break data relationships.* 

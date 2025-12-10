@@ -1,0 +1,220 @@
+---
+description: Database query optimization standards for preventing N+1 queries, optimizing indexes, and improving database performance. This rule covers query analysis, eager loading, index strategies, and query profiling. Agents must avoid N+1 queries, use appropriate indexes, batch database operations, and profile slow queries.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/db/**,**/database/**,**/repositories/**,**/queries/**
+type: Performance Rule - Query optimization
+applicability: Database queries and data access
+dependencies: []
+relatedCommands: []
+relatedRules: [[caching-strategies.mdc], [../database/schema-enforcement.mdc]]
+relatedStandards: [[database/schema.md]]
+---
+
+# Query Optimization Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Writing database queries
+- Fetching related data
+- Optimizing slow endpoints
+- Designing database indexes
+
+---
+
+## Core Principles
+
+1. **Measure first** - Profile before optimizing
+2. **Avoid N+1** - Fetch related data in bulk
+3. **Index wisely** - Cover common queries
+4. **Paginate always** - Never unbounded fetches
+
+---
+
+## N+1 Query Prevention
+
+### The Problem
+
+```typescript
+// Bad: N+1 queries
+const posts = await db.posts.findAll();
+for (const post of posts) {
+  post.author = await db.users.findById(post.authorId); // N queries!
+}
+```
+
+### The Solution
+
+```typescript
+// Good: Eager loading / JOIN
+const posts = await db.posts.findAll({
+  include: [{ model: User, as: 'author' }],
+});
+
+// Good: Batch loading
+const posts = await db.posts.findAll();
+const authorIds = [...new Set(posts.map(p => p.authorId))];
+const authors = await db.users.findByIds(authorIds);
+const authorMap = new Map(authors.map(a => [a.id, a]));
+posts.forEach(p => p.author = authorMap.get(p.authorId));
+```
+
+---
+
+## Index Strategies
+
+### Common Index Patterns
+
+```sql
+-- Single column for WHERE/ORDER BY
+CREATE INDEX idx_users_email ON users(email);
+
+-- Composite for multi-column queries
+CREATE INDEX idx_posts_author_created ON posts(author_id, created_at);
+
+-- Partial index for filtered queries
+CREATE INDEX idx_active_users ON users(email) WHERE status = 'active';
+
+-- Covering index to avoid table lookup
+CREATE INDEX idx_posts_list ON posts(author_id, created_at, title);
+```
+
+### When to Index
+
+- ✅ Columns in WHERE clauses
+- ✅ Columns in JOIN conditions
+- ✅ Columns in ORDER BY
+- ✅ Foreign keys
+
+### When NOT to Index
+
+- ❌ Small tables (< 1000 rows)
+- ❌ Columns with low cardinality
+- ❌ Tables with heavy write load (unless necessary)
+
+---
+
+## Pagination
+
+### Offset Pagination (Simple)
+
+```typescript
+const page = 1;
+const pageSize = 20;
+
+const posts = await db.posts.findAll({
+  limit: pageSize,
+  offset: (page - 1) * pageSize,
+  order: [['created_at', 'DESC']],
+});
+```
+
+### Cursor Pagination (Scalable)
+
+```typescript
+// Better for large datasets
+async function getPosts(cursor?: string, limit = 20) {
+  const where = cursor 
+    ? { created_at: { $lt: new Date(cursor) } }
+    : {};
+    
+  const posts = await db.posts.findAll({
+    where,
+    limit: limit + 1, // Fetch one extra to check hasMore
+    order: [['created_at', 'DESC']],
+  });
+  
+  const hasMore = posts.length > limit;
+  if (hasMore) posts.pop();
+  
+  return {
+    posts,
+    nextCursor: posts.length ? posts[posts.length - 1].created_at : null,
+    hasMore,
+  };
+}
+```
+
+---
+
+## Query Profiling
+
+### Analyze Query Plans
+
+```sql
+-- PostgreSQL
+EXPLAIN ANALYZE SELECT * FROM posts WHERE author_id = 1;
+
+-- Check for sequential scans on large tables
+-- Look for missing index usage
+```
+
+### Log Slow Queries
+
+```typescript
+// Log queries over threshold
+const SLOW_QUERY_MS = 100;
+
+db.on('query', (query) => {
+  if (query.duration > SLOW_QUERY_MS) {
+    logger.warn('Slow query', {
+      sql: query.sql,
+      duration: query.duration,
+    });
+  }
+});
+```
+
+---
+
+## Batch Operations
+
+```typescript
+// Bad: Individual inserts
+for (const user of users) {
+  await db.users.create(user); // 100 queries for 100 users
+}
+
+// Good: Batch insert
+await db.users.bulkCreate(users); // 1 query
+
+// Good: Batch update
+await db.users.update(
+  { status: 'inactive' },
+  { where: { lastLogin: { $lt: thirtyDaysAgo } } }
+);
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ SELECT * when only few columns needed
+- ❌ Unbounded queries without LIMIT
+- ❌ Index on every column
+- ❌ Ignoring query plans
+- ❌ Not batching bulk operations
+
+---
+
+## Checklist
+
+- [ ] N+1 queries eliminated
+- [ ] Common queries have indexes
+- [ ] All lists are paginated
+- [ ] Slow queries logged
+- [ ] Bulk operations batched
+- [ ] Query plans analyzed
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [caching-strategies.mdc](./caching-strategies.mdc) - Cache query results
+  - [../database/schema-enforcement.mdc](../database/schema-enforcement.mdc) - Schema design
+- **Standards:**
+  - [schema.md](../../standards/database/schema.md) - Database schema standards

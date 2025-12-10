@@ -1,0 +1,295 @@
+---
+description: Auto-applied rule for module testing requirements. Ensures modules are properly tested and provides testing utilities when available. Guides testing of module integration in projects.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 06:49:53 EST
+alwaysApply: false
+globs: **/modules/**
+type: Behavioral Rule - Module testing guidance
+applicability: When integrating modules, writing tests for module usage, or verifying module functionality
+dependencies: []
+relatedCommands: []
+relatedRules: [module-integration-patterns.mdc, module-discovery-selection.mdc]
+relatedStandards: [testing.md, module-structure.md]
+---
+
+# Module Testing Requirements Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Integrating a module into a project
+- Writing tests for module usage
+- Verifying module functionality
+- Using module test utilities
+- Running module tests
+
+---
+
+## Core Principle
+
+**Modules should be tested, and module integration should be verified.** Modules should provide test utilities when applicable, and projects should test module integration to ensure correct usage.
+
+**Source Standard:** `standards/testing.md` and `standards/module-structure.md`
+
+---
+
+## Agent Responsibilities
+
+### 1. Module Test Requirements
+
+**Every module should have:**
+
+#### ✅ Module Tests
+
+**Location:** `modules/{module-name}/tests/`
+
+**Requirements:**
+- Unit tests for core functionality
+- Integration tests for complex features
+- Test utilities if applicable (mocks, helpers)
+
+**Example Structure:**
+```
+modules/{module-name}/tests/
+├── {module-name}.test.ts      # Core functionality tests
+├── integration.test.ts         # Integration tests
+└── helpers.ts                  # Test utilities
+```
+
+#### ✅ Test Utilities
+
+**Modules should provide test utilities when applicable:**
+
+**Examples:**
+- Mock implementations (see `testing-module`)
+- Test helpers
+- Fixture data
+- Test configuration
+
+**Location:** `modules/{module-name}/src/testing/` or `modules/{module-name}/tests/helpers.ts`
+
+### 2. Testing Module Integration
+
+**After integrating a module, test the integration:**
+
+#### Step 1: Run Module Tests
+
+**If module has tests, run them:**
+
+```bash
+# Navigate to module directory
+cd lib/{module-name}
+
+# Run module tests
+npm test
+# or
+npm run test
+```
+
+**Verify:**
+- [ ] All module tests pass
+- [ ] No test failures
+- [ ] Module functionality works
+
+#### Step 2: Test Module Integration
+
+**Create integration tests in project:**
+
+```typescript
+// tests/integration/{module-name}.test.ts
+import { setupLogger } from '@/lib/logger-module';
+
+describe('Logger Module Integration', () => {
+  it('should initialize correctly', () => {
+    const logger = setupLogger('test', { env: 'test' });
+    expect(logger).toBeDefined();
+  });
+
+  it('should log messages', () => {
+    const logger = setupLogger('test', { env: 'test' });
+    logger.info('Test message');
+    // Verify logging works
+  });
+});
+```
+
+**Verify:**
+- [ ] Module initializes correctly
+- [ ] Module functions as expected
+- [ ] Integration works with project code
+
+#### Step 3: Use Module Test Utilities
+
+**If module provides test utilities, use them:**
+
+**Example: Logger Module Mock:**
+```typescript
+// From testing-module
+import { createMockLogger } from '@/lib/testing-module';
+
+const mockLogger = createMockLogger();
+// Use mockLogger in tests
+```
+
+**Example: Supabase Mock:**
+```typescript
+// From testing-module
+import { createMockSupabaseClient } from '@/lib/testing-module';
+
+const mockSupabase = createMockSupabaseClient();
+// Use mockSupabase in tests
+```
+
+### 3. Module Test Utilities
+
+**Check for available test utilities:**
+
+#### Testing Module
+
+**Location:** `modules/testing-module/`
+
+**Provides:**
+- Mock Supabase client
+- Mock logger
+- Test helpers
+
+**Usage:**
+```typescript
+import { createMockSupabaseClient, createMockLogger } from '@/lib/testing-module';
+
+// Use in tests
+const mockSupabase = createMockSupabaseClient();
+const mockLogger = createMockLogger();
+```
+
+#### Module-Specific Test Utilities
+
+**Some modules provide their own test utilities:**
+
+**Example: Logger Module:**
+```typescript
+// modules/logger-module/src/testing/create-mock-logger.ts
+import { createMockLogger } from '@/lib/logger-module/src/testing';
+
+const mockLogger = createMockLogger();
+```
+
+**Check module documentation for test utilities.**
+
+### 4. Testing Checklist
+
+**When integrating a module:**
+
+- [ ] Module has tests in `tests/` directory
+- [ ] Module tests pass (if available)
+- [ ] Integration tests created in project
+- [ ] Module functionality verified
+- [ ] Test utilities used (if available)
+- [ ] Module works in project context
+
+### 5. Examples
+
+#### Example 1: Testing Logger Module Integration
+
+```typescript
+// tests/integration/logger.test.ts
+import { setupLogger } from '@/lib/logger-module';
+
+describe('Logger Integration', () => {
+  it('should setup logger correctly', () => {
+    const logger = setupLogger('test-app', {
+      env: 'test',
+      serviceName: 'test',
+    });
+    
+    expect(logger).toBeDefined();
+    expect(logger.info).toBeDefined();
+  });
+
+  it('should log messages', () => {
+    const logger = setupLogger('test-app', { env: 'test' });
+    
+    // Should not throw
+    expect(() => {
+      logger.info('Test message');
+    }).not.toThrow();
+  });
+});
+```
+
+#### Example 2: Using Test Utilities
+
+```typescript
+// tests/unit/api.test.ts
+import { createMockSupabaseClient } from '@/lib/testing-module';
+import { createApiHandler } from '@/lib/backend-api';
+
+describe('API Handler', () => {
+  it('should handle requests', async () => {
+    const mockSupabase = createMockSupabaseClient();
+    
+    const handler = createApiHandler({
+      requireAuth: true,
+      handler: async ({ ctx }) => {
+        // Use mockSupabase
+        return { data: 'test' };
+      },
+    });
+    
+    // Test handler
+  });
+});
+```
+
+---
+
+## Integration with Other Rules
+
+This rule works with:
+
+### `module-integration-patterns.mdc`
+- Testing is part of integration verification
+
+### `module-discovery-selection.mdc`
+- Check for test utilities when selecting module
+
+---
+
+## Related Files
+
+- **Standards:**
+  - [testing.md](../../standards/testing.md) - Testing standards
+  - [module-structure.md](../../standards/module-structure.md) - Module structure
+- **Rules:**
+  - [module-integration-patterns.mdc](./module-integration-patterns.mdc) - Integration process
+  - [module-discovery-selection.mdc](./module-discovery-selection.mdc) - Module selection
+- **Modules:**
+  - `modules/testing-module/` - Test utilities
+  - `modules/*/tests/` - Module tests
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when integrating modules or writing tests.**
+
+**Agents should:**
+1. **Check for module tests** in `tests/` directory
+2. **Run module tests** if available
+3. **Create integration tests** for module usage
+4. **Use test utilities** if module provides them
+5. **Verify module functionality** in project context
+6. **Test module integration** thoroughly
+
+**Testing checklist:**
+- [ ] Module has tests (check `tests/` directory)
+- [ ] Module tests pass (if available)
+- [ ] Integration tests created
+- [ ] Module functionality verified
+- [ ] Test utilities used (if available)
+- [ ] Module works in project
+
+---
+
+*This rule ensures modules are properly tested and module integration is verified, preventing issues in production.*

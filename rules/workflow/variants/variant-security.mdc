@@ -1,0 +1,224 @@
+---
+description: Security Patch workflow variant for vulnerability fixes, access control changes, and security-related tasks. Includes mandatory security audits, severity classification, and post-deployment monitoring requirements.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 09:37:22 EST
+alwaysApply: false
+globs:
+type: Workflow Variant Rule - Security patch handling
+applicability: When task involves security vulnerabilities or access control changes
+dependencies: []
+relatedCommands: [[audit-security.md](../../commands/audit-security.md)]
+relatedRules: [[../task-workflow.mdc](../task-workflow.mdc), [../workflow-variants.mdc](../workflow-variants.mdc), [../../security/authentication.mdc](../../security/authentication.mdc), [../../security/authorization.mdc](../../security/authorization.mdc)]
+relatedStandards: [[security/access-control.md](../../../standards/security/access-control.md)]
+---
+
+# Security Patch Workflow Variant
+
+This variant adds security-specific requirements to the standard workflow for vulnerability fixes and access control changes.
+
+> **Parent Rule:** See `workflow-variants.mdc` for variant selection and `task-workflow.mdc` for the complete workflow.
+
+---
+
+## When to Use
+
+- Security vulnerability fixes
+- Access control changes
+- Authentication/authorization updates
+- Secrets rotation
+- RLS policy security reviews
+- Dependency security updates
+
+## Trigger Keywords
+
+User request involves: "security", "vulnerability", "CVE", "access control", "auth", "RLS", "secrets", "security audit"
+
+---
+
+## Severity Classification
+
+| Severity | Response Time | Example |
+|----------|--------------|---------|
+| **Critical** | Immediate (use Emergency variant) | RCE, authentication bypass |
+| **High** | Within hours | SQL injection, data exposure |
+| **Medium** | Within days | XSS, CSRF |
+| **Low** | Normal cycle | Information disclosure |
+
+> **Note:** For Critical severity, combine this variant with the Emergency variant for rapid response.
+
+---
+
+## Step-by-Step Modifications
+
+### Step 0: Security Analysis
+
+**Do:**
+- Identify vulnerability type and severity
+- Assess attack surface and impact
+- Identify affected components
+- Plan mitigation strategy
+- Consider disclosure timeline (if external)
+
+**Questions to Ask:**
+- What's the vulnerability severity?
+- Is this actively being exploited?
+- What data/systems are at risk?
+- Who needs to be notified?
+
+### Step 1: Security Pre-Flight
+
+**Do:**
+- Standard pre-flight checks
+- Enhanced secrets scanning
+- Review current security posture
+- Check for related vulnerabilities
+- Verify security audit tools are available
+
+**Additional Checks:**
+- `npm audit` (for Node.js)
+- `pip audit` (for Python)
+- Review `.env` patterns
+- Check for hardcoded secrets
+
+### Step 2: Security-Focused Development
+
+**Do:**
+- Implement minimal attack surface fix
+- Follow secure coding practices
+- Add input validation if missing
+- Update access control if needed
+- Document security considerations
+
+**Security Coding Checklist:**
+- [ ] Input validation added/verified
+- [ ] Output encoding appropriate
+- [ ] Authentication checks in place
+- [ ] Authorization verified
+- [ ] Secrets not hardcoded
+- [ ] Error messages don't leak info
+
+### Step 3: Security Validation (Mandatory)
+
+**Do:**
+- Run security audit (`audit-security.mdc`)
+- Verify vulnerability is fixed
+- Test that fix doesn't break functionality
+- Scan for similar vulnerabilities
+- Update security documentation
+
+**Mandatory Checks:**
+- [ ] Security audit passes
+- [ ] No new vulnerabilities introduced
+- [ ] Access control verified
+- [ ] Secrets scan clean
+- [ ] CHANGELOG.md updated with security note
+
+### Post-Deployment (Required)
+
+- Monitor for exploitation attempts
+- Verify fix in production
+- Update incident response documentation
+- Consider security disclosure (if applicable)
+
+---
+
+## Security Patch Checklist
+
+```markdown
+- [ ] Vulnerability identified and classified
+- [ ] Severity: [ ] Critical [ ] High [ ] Medium [ ] Low
+- [ ] Impact analysis completed
+- [ ] Fix implemented with:
+  - [ ] Minimal attack surface
+  - [ ] Input validation
+  - [ ] Access control verified
+  - [ ] No new vulnerabilities
+- [ ] Security audit passed
+- [ ] Related vulnerabilities checked
+- [ ] CHANGELOG.md updated
+- [ ] Security documentation updated
+- [ ] Committed with `security(scope): description`
+- [ ] Post-deploy monitoring in place
+```
+
+---
+
+## Security Audit Commands
+
+| Stack | Command | Purpose |
+|-------|---------|---------|
+| Node.js | `npm audit` | Dependency vulnerabilities |
+| Python | `pip audit` | Dependency vulnerabilities |
+| General | `audit-security` | Full security scan |
+
+---
+
+## Common Vulnerability Types
+
+| Type | Check For | Mitigation |
+|------|-----------|------------|
+| **SQL Injection** | User input in queries | Parameterized queries |
+| **XSS** | User input in output | Output encoding |
+| **CSRF** | State-changing requests | CSRF tokens |
+| **Auth Bypass** | Missing auth checks | Verify all routes |
+| **Data Exposure** | Sensitive data in logs | Sanitize logs |
+| **Secrets** | Hardcoded credentials | Environment variables |
+
+---
+
+## Comparison with Standard Workflow
+
+| Phase | Standard | Security |
+|-------|----------|----------|
+| **Step 0** | Full clarification | + Severity analysis |
+| **Step 1** | Full validation | + Enhanced scanning |
+| **Step 2** | Full development | + Security focus |
+| **Step 3** | Full validation | + Mandatory audit |
+| **Post** | Normal process | + Monitoring required |
+| **Commit** | Various | Always `security(scope):` |
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [workflow-variants.mdc](../workflow-variants.mdc) - Variant router/index
+  - [task-workflow.mdc](../task-workflow.mdc) - Parent workflow rule
+  - [authentication.mdc](../../security/authentication.mdc) - Auth standards
+  - [authorization.mdc](../../security/authorization.mdc) - Authorization standards
+- **Commands:**
+  - [audit-security.md](../../commands/audit-security.md) - Security audit command
+- **Standards:**
+  - [access-control.md](../../../standards/security/access-control.md) - Access control standards
+
+---
+
+## How to Use This Rule
+
+**This rule activates when a task involves security concerns.**
+
+**Agents should:**
+1. Recognize security trigger keywords
+2. Classify vulnerability severity
+3. Apply enhanced security scanning
+4. Follow secure coding practices
+5. Run mandatory security audit
+6. Update security documentation
+7. Set up post-deployment monitoring
+8. Commit with `security(scope): description` format
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

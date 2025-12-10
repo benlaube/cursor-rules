@@ -1,0 +1,262 @@
+---
+description: Supabase client configuration and usage patterns. This rule covers client initialization, authentication flows, database queries, and real-time subscriptions. Agents must use proper client configuration, implement auth helpers, use typed queries, and handle real-time updates correctly.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/supabase/**,**/lib/supabase*
+type: Tech Stack Rule - Supabase client
+applicability: Supabase integration
+dependencies: []
+relatedCommands: []
+relatedRules: [[supabase-rls.mdc], [../database/schema-enforcement.mdc], [../security/authentication.mdc]]
+relatedStandards: []
+---
+
+# Supabase Client Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Configuring Supabase clients
+- Implementing authentication
+- Querying the database
+- Using real-time subscriptions
+
+---
+
+## Client Setup
+
+### Browser Client
+
+```typescript
+// lib/supabase/client.ts
+import { createBrowserClient } from '@supabase/ssr';
+import type { Database } from '@/types/supabase';
+
+export function createClient() {
+  return createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+```
+
+### Server Client (Next.js)
+
+```typescript
+// lib/supabase/server.ts
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import type { Database } from '@/types/supabase';
+
+export function createClient() {
+  const cookieStore = cookies();
+
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options) {
+          cookieStore.set({ name, value: '', ...options });
+        },
+      },
+    }
+  );
+}
+```
+
+---
+
+## Type Generation
+
+```bash
+# Generate types from database
+npx supabase gen types typescript --project-id <project-id> > types/supabase.ts
+
+# Or from local
+npx supabase gen types typescript --local > types/supabase.ts
+```
+
+```typescript
+// types/supabase.ts (generated)
+export type Database = {
+  public: {
+    Tables: {
+      users: {
+        Row: { id: string; email: string; name: string; created_at: string };
+        Insert: { email: string; name: string };
+        Update: { email?: string; name?: string };
+      };
+    };
+  };
+};
+```
+
+---
+
+## Authentication
+
+### Sign Up
+
+```typescript
+async function signUp(email: string, password: string) {
+  const supabase = createClient();
+  
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${window.location.origin}/auth/callback`,
+    },
+  });
+  
+  if (error) throw error;
+  return data;
+}
+```
+
+### Sign In
+
+```typescript
+async function signIn(email: string, password: string) {
+  const supabase = createClient();
+  
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  
+  if (error) throw error;
+  return data;
+}
+```
+
+### Get User
+
+```typescript
+// Server-side
+async function getUser() {
+  const supabase = createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  return user;
+}
+```
+
+---
+
+## Database Queries
+
+### Select
+
+```typescript
+// Typed query
+const { data, error } = await supabase
+  .from('posts')
+  .select('id, title, content, author:users(name)')
+  .eq('published', true)
+  .order('created_at', { ascending: false })
+  .limit(10);
+```
+
+### Insert
+
+```typescript
+const { data, error } = await supabase
+  .from('posts')
+  .insert({
+    title: 'New Post',
+    content: 'Content here',
+    author_id: userId,
+  })
+  .select()
+  .single();
+```
+
+### Update
+
+```typescript
+const { data, error } = await supabase
+  .from('posts')
+  .update({ title: 'Updated Title' })
+  .eq('id', postId)
+  .select()
+  .single();
+```
+
+### Delete
+
+```typescript
+const { error } = await supabase
+  .from('posts')
+  .delete()
+  .eq('id', postId);
+```
+
+---
+
+## Real-time Subscriptions
+
+```typescript
+useEffect(() => {
+  const supabase = createClient();
+  
+  const channel = supabase
+    .channel('posts')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'posts',
+        filter: `author_id=eq.${userId}`,
+      },
+      (payload) => {
+        console.log('Change received!', payload);
+        // Update local state
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [userId]);
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Using anon key for server operations
+- ❌ Not using typed clients
+- ❌ Missing error handling
+- ❌ Not cleaning up subscriptions
+- ❌ Exposing service_role key to client
+
+---
+
+## Checklist
+
+- [ ] Browser and server clients configured
+- [ ] Types generated from schema
+- [ ] Auth flows implemented
+- [ ] Queries are typed
+- [ ] Subscriptions cleaned up
+- [ ] Error handling in place
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [supabase-rls.mdc](./supabase-rls.mdc) - RLS policies
+  - [../database/schema-enforcement.mdc](../database/schema-enforcement.mdc) - Schema standards
+  - [../security/authentication.mdc](../security/authentication.mdc) - Auth patterns

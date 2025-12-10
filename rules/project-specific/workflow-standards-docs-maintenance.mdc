@@ -1,0 +1,83 @@
+---
+description: Project-specific rule for maintaining documentation in the Workflow Rules / Coding Standards repository. This rule requires updating CHANGELOG.md, AGENTS.md, INTEGRATION_GUIDE.md, and related documentation when making changes. This rule should be adapted or removed when integrating into other projects.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: true
+globs:
+type: Project-Specific Rule - Documentation maintenance for this repository
+applicability: Workflow Rules / Coding Standards repository only
+dependencies: []
+relatedCommands: []
+relatedRules: [[../documentation/documentation-metadata.mdc], [../workflow/task-workflow.mdc]]
+relatedStandards: [[project-planning/documentation-management.md]]
+---
+
+# Workflow Standards Documentation Maintenance Rule
+
+> **NOTE:** This rule is specific to the **Workflow Rules / Coding Standards** repository. When this repository is integrated into other projects, this rule should be adapted or removed as it references project-specific documentation files (AGENTS.md, INTEGRATION_GUIDE.md, QUICK_INTEGRATION.md, etc.).
+
+## When to Update Documentation
+
+The AI agent MUST review and update documentation whenever:
+
+- **Feature Changes:** New features, modules, or capabilities are added
+- **Architecture Changes:** System architecture, patterns, or design decisions change
+- **Standards Updates:** Coding standards, conventions, or best practices are modified
+- **Process Changes:** Development workflows, commands, or checklists are updated
+- **Module Changes:** Modules are added, removed, or significantly modified
+
+## Required Documentation Files to Update
+
+### Root-Level Documentation
+
+1. **`AGENTS.md`** - Project context and memory
+   - Update when: Architecture changes, new patterns, major milestones
+
+2. **`CHANGELOG.md`** - Change history
+   - Update when: ANY feature, change, or significant update
+   - Include timestamp and categorization
+
+3. **`README.md`** - Project overview
+   - Update when: Project structure, modules, or quick start instructions change
+
+4. **`STANDARDS_INTEGRATION_GUIDE.md`** - Integration instructions
+   - Update when: Integration process changes
+
+5. **`QUICK_INTEGRATION.md`** - Quick reference
+   - Update when: Integration file lists or quick steps change
+
+### Module-Level Documentation
+
+6. **Module README.md files** (`modules/{module-name}/README.md`)
+   - Update when: Module features, API, or usage changes
+
+## Documentation Update Checklist
+
+When making a change, use this checklist:
+
+- [ ] **CHANGELOG.md** - Always updated with timestamp and description
+- [ ] **AGENTS.md** - Updated if architecture, patterns, or workflow changed
+- [ ] **README.md** - Updated if structure or modules changed
+- [ ] **Cross-references** - All links and references verified
+- [ ] **Timestamps** - "Last Updated" metadata updated
+
+## Project-Specific Note
+
+**This rule is designed for the Workflow Rules / Coding Standards repository.**
+
+When integrating this repository into other projects:
+- **Adapt this rule** to match the target project's documentation structure
+- **Remove references** to files that don't exist in the target project
+- **Add references** to project-specific documentation files
+- **Keep the core principle:** Update documentation when features or architecture change
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [../documentation/documentation-metadata.mdc](../documentation/documentation-metadata.mdc) - Metadata standards
+  - [../workflow/task-workflow.mdc](../workflow/task-workflow.mdc) - Workflow integration
+- **Standards:**
+  - [documentation-management.md](../../standards/project-planning/documentation-management.md) - Documentation standards

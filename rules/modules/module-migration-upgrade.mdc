@@ -1,0 +1,408 @@
+---
+description: Auto-applied rule for handling module migrations and upgrades. Guides database migrations, configuration migrations, and API migrations when modules are updated or integrated.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 06:49:53 EST
+alwaysApply: false
+globs: **/modules/**
+type: Behavioral Rule - Module migration guidance
+applicability: When integrating modules requiring database changes, updating modules with migration requirements, or handling module schema changes
+dependencies: []
+relatedCommands: []
+relatedRules: [module-integration-patterns.mdc, module-update-versioning.mdc, database-schema-enforcement.mdc]
+relatedStandards: [module-structure.md, database/schema.md]
+---
+
+# Module Migration & Upgrade Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Integrating a module that requires database changes
+- Updating a module with migration requirements
+- Handling module schema changes
+- Applying module migrations
+- Upgrading module database schema
+
+---
+
+## Core Principle
+
+**Modules may require database, configuration, or API migrations when integrated or updated.** These migrations must be applied correctly, tested thoroughly, and documented in the project.
+
+**Source Standard:** `standards/module-structure.md` and `standards/database/schema.md`
+
+---
+
+## Agent Responsibilities
+
+### 1. Migration Types
+
+**Understand different types of module migrations:**
+
+#### Type 1: Database Migrations
+
+**Definition:** SQL migrations that create/modify database schema.
+
+**Location:** `modules/{module-name}/migrations/`
+
+**Examples:**
+- Creating tables
+- Adding columns
+- Creating indexes
+- Setting up RLS policies
+
+**Handling:**
+1. Review migration files before applying
+2. Apply migrations in order
+3. Test migrations in development first
+4. Document in project's CHANGELOG-DATABASE.md
+
+#### Type 2: Configuration Migrations
+
+**Definition:** Changes to configuration format or required settings.
+
+**Examples:**
+- Configuration file format changes
+- New required environment variables
+- Changed configuration option names
+- New configuration sections
+
+**Handling:**
+1. Review module's migration guide
+2. Update configuration files
+3. Test configuration loading
+4. Verify all settings work
+
+#### Type 3: API Migrations
+
+**Definition:** Changes to module's public API.
+
+**Examples:**
+- Function signature changes
+- Export name changes
+- Removed exports
+- New required parameters
+
+**Handling:**
+1. Review breaking changes in CHANGELOG.md
+2. Update all module usage
+3. Update import statements
+4. Test all affected code
+
+### 2. Database Migration Process
+
+**Follow this process for database migrations:**
+
+#### Step 1: Review Migration Files
+
+**Check module's migrations directory:**
+
+```bash
+# List migration files
+ls modules/{module-name}/migrations/
+
+# Review migration files
+cat modules/{module-name}/migrations/schema.sql
+```
+
+**Verify:**
+- [ ] Migration files exist
+- [ ] Migrations are well-documented (SQL comments)
+- [ ] Migrations are idempotent (can run multiple times)
+- [ ] RLS policies are included (if needed)
+
+#### Step 2: Plan Migration
+
+**Before applying migrations:**
+
+1. **Review Migration Content:**
+   - Understand what changes will be made
+   - Check for conflicts with existing schema
+   - Verify migration is safe
+
+2. **Check for Conflicts:**
+   - Compare with existing database schema
+   - Identify potential conflicts
+   - Plan conflict resolution
+
+3. **Backup Database:**
+   ```bash
+   # Backup database before migration
+   pg_dump database_name > backup.sql
+   ```
+
+#### Step 3: Apply Migrations
+
+**Apply migrations in development first:**
+
+```sql
+-- Apply migration
+\i modules/{module-name}/migrations/schema.sql
+
+-- Or using Supabase CLI
+supabase db reset  # In development
+supabase migration up  # Apply migrations
+```
+
+**Verify:**
+- [ ] Migration applied successfully
+- [ ] No errors during migration
+- [ ] Schema changes are correct
+- [ ] RLS policies are active (if applicable)
+
+#### Step 4: Test Migration
+
+**Test after applying migration:**
+
+1. **Verify Schema:**
+   ```sql
+   -- Check tables exist
+   SELECT table_name FROM information_schema.tables 
+   WHERE table_schema = 'public';
+   
+   -- Check columns
+   SELECT column_name FROM information_schema.columns 
+   WHERE table_name = '{table_name}';
+   ```
+
+2. **Test Functionality:**
+   - Test module functionality
+   - Verify database operations work
+   - Check RLS policies (if applicable)
+
+3. **Test Rollback (if needed):**
+   - Test migration rollback
+   - Verify rollback works correctly
+
+#### Step 5: Document Migration
+
+**Document in project's CHANGELOG-DATABASE.md:**
+
+```markdown
+## [Unreleased] - YYYY-MM-DD
+
+### Added
+- **{module-name} schema** - Added tables/columns from {module-name} module
+  - Tables: {table1}, {table2}
+  - Columns: {table1.column1}, {table2.column2}
+  - RLS policies: {policy1}, {policy2}
+```
+
+### 3. Configuration Migration Process
+
+**Follow this process for configuration migrations:**
+
+#### Step 1: Review Configuration Changes
+
+**Check module's migration guide:**
+
+1. **Read Migration Guide:**
+   - Review configuration format changes
+   - Note new required settings
+   - Check for renamed options
+
+2. **Compare Configurations:**
+   - Compare old vs new configuration format
+   - Identify required changes
+   - Plan configuration update
+
+#### Step 2: Update Configuration
+
+**Update configuration files:**
+
+1. **Update Environment Variables:**
+   ```bash
+   # Add new environment variables to .env
+   NEW_CONFIG_OPTION=value
+   ```
+
+2. **Update Config Files:**
+   ```json
+   // Update config.json
+   {
+     "newOption": "value",
+     "oldOption": null  // Remove if deprecated
+   }
+   ```
+
+3. **Test Configuration:**
+   - Verify configuration loads
+   - Test all configuration options
+   - Verify defaults work
+
+#### Step 3: Document Configuration Changes
+
+**Document in project CHANGELOG.md:**
+
+```markdown
+## [Unreleased] - YYYY-MM-DD
+
+### Changed
+- **{module-name} configuration** - Updated configuration format
+  - Added: {newOption}
+  - Removed: {oldOption}
+  - Changed: {option} format
+```
+
+### 4. API Migration Process
+
+**Follow this process for API migrations:**
+
+#### Step 1: Review Breaking Changes
+
+**Check module's CHANGELOG.md:**
+
+1. **Identify Breaking Changes:**
+   - Review "BREAKING CHANGE" markers
+   - Note API changes
+   - Check migration guide
+
+2. **List Affected Code:**
+   - Find all module usage
+   - Identify code that needs updates
+   - Plan update strategy
+
+#### Step 2: Update Code
+
+**Update all module usage:**
+
+1. **Update Imports:**
+   ```typescript
+   // Old
+   import { oldFunction } from '@/lib/module-name';
+   
+   // New
+   import { newFunction } from '@/lib/module-name';
+   ```
+
+2. **Update Function Calls:**
+   ```typescript
+   // Old
+   oldFunction(param1, param2);
+   
+   // New
+   newFunction({ param1, param2 });
+   ```
+
+3. **Update Configuration:**
+   ```typescript
+   // Old
+   setupModule({ oldOption: value });
+   
+   // New
+   setupModule({ newOption: value });
+   ```
+
+#### Step 3: Test Updates
+
+**Test all affected code:**
+
+1. **Run Tests:**
+   ```bash
+   npm test
+   ```
+
+2. **Test Functionality:**
+   - Test all module usage
+   - Verify functionality works
+   - Check for errors
+
+3. **Verify No Regressions:**
+   - Test related functionality
+   - Verify no side effects
+
+### 5. Migration Examples
+
+#### Example 1: Database Migration
+
+**Module:** logger-module requires `logs` table
+
+**Process:**
+1. ✅ Review `modules/logger-module/migrations/logs-schema.sql`
+2. ✅ Check for conflicts with existing schema
+3. ✅ Backup database
+4. ✅ Apply migration in development
+5. ✅ Test logging functionality
+6. ✅ Document in CHANGELOG-DATABASE.md
+7. ✅ Apply in production (after testing)
+
+#### Example 2: Configuration Migration
+
+**Module:** settings-manager adds new required config
+
+**Process:**
+1. ✅ Review migration guide
+2. ✅ Add new environment variable to .env
+3. ✅ Update configuration loading
+4. ✅ Test configuration
+5. ✅ Document in CHANGELOG.md
+
+#### Example 3: API Migration
+
+**Module:** backend-api changes handler API
+
+**Process:**
+1. ✅ Review CHANGELOG.md for breaking changes
+2. ✅ Find all handler usage
+3. ✅ Update handler calls
+4. ✅ Test all API routes
+5. ✅ Verify no regressions
+
+---
+
+## Integration with Other Rules
+
+This rule works with:
+
+### `module-integration-patterns.mdc`
+- Migrations are part of integration process
+
+### `module-update-versioning.mdc`
+- Updates may require migrations
+
+### `database-schema-enforcement.mdc`
+- Database migrations must follow schema standards
+
+---
+
+## Related Files
+
+- **Standards:**
+  - [module-structure.md](../../standards/module-structure.md) - Module structure
+  - [database/schema.md](../../standards/database/schema.md) - Database schema standards
+- **Rules:**
+  - [module-integration-patterns.mdc](./module-integration-patterns.mdc) - Integration process
+  - [module-update-versioning.mdc](./module-update-versioning.mdc) - Version management
+  - [database-schema-enforcement.mdc](./database-schema-enforcement.mdc) - Schema enforcement
+- **Modules:**
+  - `modules/*/migrations/` - Migration files
+  - `modules/*/CHANGELOG.md` - Change history
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when handling module migrations.**
+
+**Agents should:**
+1. **Identify migration type** (database, configuration, API)
+2. **Review migration files/guides** before applying
+3. **Plan migration** carefully
+4. **Apply migrations** in development first
+5. **Test migrations** thoroughly
+6. **Document migrations** in project CHANGELOG
+
+**Migration checklist:**
+- [ ] Migration type identified
+- [ ] Migration files/guides reviewed
+- [ ] Migration planned
+- [ ] Backup created (if database)
+- [ ] Migration applied in development
+- [ ] Migration tested
+- [ ] Migration documented
+- [ ] Migration applied in production (after testing)
+
+---
+
+*This rule ensures module migrations are handled correctly, with proper planning, testing, and documentation.*

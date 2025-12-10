@@ -1,0 +1,173 @@
+---
+description: Database-focused auto-healing for connectivity issues, migration failures, connection pooling problems, and Supabase/Docker database service startup issues. Use this rule when errors mention database connection refused, authentication failed, migration errors, pool exhausted, or Supabase/Postgres not running. Handles DB-specific recovery while maintaining data safety and project isolation.
+version: 1.1.0
+created: 12-04-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs:
+type: Error Recovery Rule - Database auto-healing
+applicability: Database connectivity/migration/pooling issues
+dependencies: []
+relatedCommands: []
+relatedRules: [[../auto-heal.mdc], [../task-workflow.mdc], [../../database/schema-enforcement.mdc]]
+relatedStandards: [[../../standards/database/schema.md], [../../standards/architecture/supabase-local-setup.md]]
+---
+
+# Auto-Heal Database Rule
+
+Database-focused auto-healing for connectivity, migrations, and pooling issues.
+
+## When This Rule Applies
+
+Use this rule when errors mention:
+- `connection refused` (to database)
+- `authentication failed` (database auth)
+- `migration failed`
+- `pending migrations`
+- `pool exhausted`
+- `too many connections`
+- `Supabase` or `Postgres` not running
+- RLS policy errors
+
+---
+
+## Recovery Strategies
+
+### 1. Connection Refused
+
+**Symptoms:** `ECONNREFUSED`, `connection refused to localhost:5432`
+
+**Recovery:**
+1. Check if database is running:
+   - Supabase: `supabase status`
+   - Docker: `docker ps | grep postgres`
+2. Start database if not running:
+   - Supabase: `supabase start`
+   - Docker: `docker-compose up -d db`
+3. Verify connection string in `.env`
+
+```bash
+# Check Supabase
+supabase status
+
+# Start Supabase
+supabase start
+
+# Check Docker
+docker ps | grep postgres
+```
+
+### 2. Authentication Failed
+
+**Symptoms:** `password authentication failed`, `FATAL: role does not exist`
+
+**Recovery:**
+1. Verify credentials in `.env`
+2. For Supabase: Get fresh credentials with `supabase status`
+3. Check for typos in `DATABASE_URL`
+4. Ensure correct database name
+
+### 3. Migration Failures
+
+**Symptoms:** `migration failed`, `relation already exists`
+
+**Recovery:**
+1. Check migration status: `supabase migration list`
+2. For conflicts: May need to reset local DB
+3. **CRITICAL:** Never force-push migrations without verification
+4. Check for manual schema changes that conflict
+
+```bash
+# Check migration status
+supabase migration list
+
+# Reset local database (DESTRUCTIVE)
+supabase db reset
+```
+
+### 4. Connection Pool Exhausted
+
+**Symptoms:** `too many connections`, `pool exhausted`
+
+**Recovery:**
+1. Check for connection leaks in code
+2. Restart application to release connections
+3. Increase pool size if legitimate need
+4. For Supabase: Use connection pooler (port 6543)
+
+### 5. Supabase Not Running
+
+**Symptoms:** Can't connect to local Supabase
+
+**Recovery:**
+1. Check status: `supabase status`
+2. If not running: `supabase start`
+3. If stuck: `supabase stop && supabase start`
+4. Check Docker is running
+
+```bash
+supabase status
+supabase stop
+supabase start
+```
+
+### 6. RLS Policy Errors
+
+**Symptoms:** `permission denied`, `row-level security policy violation`
+
+**Recovery:**
+1. Check if RLS is enabled on table
+2. Verify user role in JWT
+3. Review policy conditions
+4. For testing: Temporarily disable RLS (dev only)
+
+---
+
+## Data Safety Rules
+
+**CRITICAL - Never perform these without user confirmation:**
+1. `supabase db reset` - Destroys all local data
+2. `DROP TABLE` commands
+3. Migration rollbacks
+4. Force-pushing migrations
+
+**Always:**
+1. Back up data before destructive operations
+2. Verify you're on the correct database (local vs production)
+3. Test migrations on local before production
+
+---
+
+## Auto-Fix Commands
+
+```bash
+# Check database status
+supabase status
+docker ps | grep postgres
+
+# Start database
+supabase start
+docker-compose up -d db
+
+# Migration status
+supabase migration list
+
+# Reset local database (DESTRUCTIVE - confirm first)
+supabase db reset
+
+# Connection testing
+psql $DATABASE_URL -c "SELECT 1"
+```
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [../auto-heal.mdc](../auto-heal.mdc) - Router to all auto-heal rules
+  - [auto-heal-dev.mdc](./auto-heal-dev.mdc) - Build issues
+  - [auto-heal-runtime.mdc](./auto-heal-runtime.mdc) - Runtime issues
+  - [../../database/schema-enforcement.mdc](../../database/schema-enforcement.mdc) - Schema standards
+- **Standards:**
+  - [schema.md](../../../standards/database/schema.md) - Database schema standards
+  - [supabase-local-setup.md](../../../standards/architecture/supabase-local-setup.md) - Supabase setup

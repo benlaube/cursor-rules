@@ -1,0 +1,128 @@
+---
+description: Auto-heal router rule that directs agents to the appropriate scoped auto-heal rule based on error type. Routes to auto-heal-dev for build/compile/dependency issues, auto-heal-runtime for port/container/process issues, and auto-heal-database for database connectivity/migration issues. This enables targeted error recovery with specialized handling for each domain.
+version: 2.0.0
+created: 12-04-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs:
+type: Error Recovery Router Rule - Routes to appropriate auto-heal rule
+applicability: When errors occur during development
+dependencies: []
+relatedCommands: [[launch-debug-fix.md], [launch.md]]
+relatedRules: [[auto-heal/auto-heal-dev.mdc], [auto-heal/auto-heal-runtime.mdc], [auto-heal/auto-heal-database.mdc], [task-workflow.mdc], [runtime-configuration.mdc]]
+relatedStandards: [[architecture/supabase-local-setup.md], [process/code-quality-linting-standards.md]]
+---
+
+# Auto-Heal Rule (Router)
+
+This rule routes agents to the appropriate scoped auto-heal rule:
+- **Development/Build:** [auto-heal/auto-heal-dev.mdc](./auto-heal/auto-heal-dev.mdc)
+- **Runtime/Launch:** [auto-heal/auto-heal-runtime.mdc](./auto-heal/auto-heal-runtime.mdc)
+- **Database:** [auto-heal/auto-heal-database.mdc](./auto-heal/auto-heal-database.mdc)
+
+Use this router to pick the correct rule for the current issue, then follow that rule's responsibilities.
+
+---
+
+## When This Rule Applies
+
+Whenever auto-healing is needed, use this router to select the scoped rule:
+- Build/compile/dependencies/env during development → **auto-heal-dev**
+- Ports/processes/containers/network/logs at runtime/launch → **auto-heal-runtime**
+- DB connectivity/migrations/pooling/service startup → **auto-heal-database**
+
+---
+
+## Error Pattern Matching Guide
+
+### Use auto-heal-dev when errors mention:
+- `cannot find module`
+- `Module not found`
+- `type error`
+- `TS2307`, `TS2345` (TypeScript errors)
+- `dependency not found`
+- `ENOENT` (missing files during build)
+- Lockfile conflicts (npm vs yarn vs pnpm)
+- `tsconfig.json` issues
+- `.env` variables missing during build
+
+### Use auto-heal-runtime when errors mention:
+- `EADDRINUSE` (port already in use)
+- `port XXXX already in use`
+- `container failed to start`
+- `docker` or `supabase` container issues
+- Process stuck/won't stop
+- `ECONNREFUSED` (to external APIs)
+- High CPU/memory usage
+- Application crashes after launch
+
+### Use auto-heal-database when errors mention:
+- `connection refused` (to database)
+- `authentication failed` (database auth)
+- `migration failed`
+- `pending migrations`
+- `pool exhausted`
+- `too many connections`
+- `Supabase` or `Postgres` not running
+- RLS policy errors
+
+---
+
+## Decision Tree
+
+```mermaid
+flowchart TD
+    Error([Error occurred]) --> Q1{About DATABASE\nor MIGRATIONS?}
+    Q1 -->|YES| DB[auto-heal-database.mdc]
+    Q1 -->|NO| Q2{About PORTS\nor CONTAINERS?}
+    Q2 -->|YES| RT[auto-heal-runtime.mdc]
+    Q2 -->|NO| Q3{About BUILD\nor DEPENDENCIES?}
+    Q3 -->|YES| DEV[auto-heal-dev.mdc]
+    Q3 -->|NO| DEV
+```
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when errors occur during development.**
+
+**Agents should:**
+1. Read the error message carefully
+2. Pattern-match to one of the three categories above
+3. Navigate to the appropriate scoped auto-heal rule
+4. Follow that rule's recovery strategies
+5. If uncertain which rule applies, start with the most specific (database → runtime → dev)
+
+**Quick Decision Tree:**
+```
+Error occurred
+    ↓
+Is it about DATABASE/MIGRATIONS/CONNECTIONS?
+    ├─ YES → auto-heal-database.mdc
+    └─ NO
+        ↓
+    Is it about PORTS/CONTAINERS/RUNNING PROCESSES?
+        ├─ YES → auto-heal-runtime.mdc
+        └─ NO
+            ↓
+        Is it about BUILD/COMPILE/DEPENDENCIES/TYPES?
+            └─ YES → auto-heal-dev.mdc
+```
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [auto-heal/auto-heal-dev.mdc](./auto-heal/auto-heal-dev.mdc) - Development/build healing
+  - [auto-heal/auto-heal-runtime.mdc](./auto-heal/auto-heal-runtime.mdc) - Runtime/launch healing
+  - [auto-heal/auto-heal-database.mdc](./auto-heal/auto-heal-database.mdc) - Database healing
+  - [task-workflow.mdc](./task-workflow.mdc) - Overall workflow integration
+  - [runtime-configuration.mdc](./runtime-configuration.mdc) - Environment standards
+- **Commands:**
+  - [launch-debug-fix.md](../../commands/launch-debug-fix.md) - Guided launch debugging
+  - [launch.md](../../commands/launch.md) - Application launch command
+- **Standards:**
+  - [supabase-local-setup.md](../../../standards/architecture/supabase-local-setup.md) - Supabase setup guide
+  - [code-quality-linting-standards.md](../../../standards/process/code-quality-linting-standards.md) - Linting standards

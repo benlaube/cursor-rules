@@ -1,0 +1,258 @@
+---
+description: Python project structure and coding standards. This rule covers project organization, module patterns, naming conventions, and code style. Agents must follow Python conventions, use proper project structure, implement type hints, and follow PEP 8 style guidelines.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/*.py,**/pyproject.toml,**/requirements.txt
+type: Tech Stack Rule - Python structure
+applicability: Python projects
+dependencies: []
+relatedCommands: []
+relatedRules: [[python-typing.mdc], [python-async.mdc], [../testing/unit-testing.mdc]]
+relatedStandards: []
+---
+
+# Python Structure Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Setting up Python projects
+- Organizing Python code
+- Writing Python modules
+- Reviewing Python structure
+
+---
+
+## Project Structure
+
+```
+project/
+  src/
+    project_name/
+      __init__.py
+      main.py              # Entry point
+      config/
+        __init__.py
+        settings.py        # Configuration
+      models/
+        __init__.py
+        user.py
+      services/
+        __init__.py
+        user_service.py
+      repositories/
+        __init__.py
+        user_repository.py
+      api/
+        __init__.py
+        routes/
+          __init__.py
+          users.py
+      utils/
+        __init__.py
+        helpers.py
+  tests/
+    __init__.py
+    conftest.py            # Pytest fixtures
+    unit/
+      test_user_service.py
+    integration/
+      test_api.py
+  pyproject.toml           # Project config
+  requirements.txt         # Dependencies
+  .env.example
+  README.md
+```
+
+---
+
+## Naming Conventions
+
+```python
+# Modules: snake_case
+user_service.py
+database_utils.py
+
+# Classes: PascalCase
+class UserService:
+    pass
+
+class DatabaseConnection:
+    pass
+
+# Functions/Variables: snake_case
+def get_user_by_id(user_id: str) -> User:
+    pass
+
+user_name = "John"
+total_count = 42
+
+# Constants: UPPER_SNAKE_CASE
+MAX_RETRIES = 3
+DEFAULT_TIMEOUT = 30
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Private: leading underscore
+def _internal_helper():
+    pass
+
+class User:
+    def __init__(self):
+        self._private_attr = None
+```
+
+---
+
+## Module Organization
+
+### __init__.py
+
+```python
+# src/project_name/services/__init__.py
+from .user_service import UserService
+from .auth_service import AuthService
+
+__all__ = ["UserService", "AuthService"]
+```
+
+### Imports
+
+```python
+# Standard library
+import os
+import sys
+from datetime import datetime
+from typing import Optional, List
+
+# Third-party
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import httpx
+
+# Local
+from .models import User
+from .services import UserService
+from .config import settings
+```
+
+---
+
+## Configuration
+
+### pyproject.toml
+
+```toml
+[project]
+name = "project-name"
+version = "0.1.0"
+description = "Project description"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.100.0",
+    "pydantic>=2.0.0",
+    "httpx>=0.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+```
+
+---
+
+## Code Style
+
+### Docstrings
+
+```python
+def get_user_by_email(email: str) -> Optional[User]:
+    """
+    Retrieve a user by their email address.
+    
+    Args:
+        email: The email address to search for.
+        
+    Returns:
+        The User object if found, None otherwise.
+        
+    Raises:
+        ValueError: If email format is invalid.
+    """
+    if not is_valid_email(email):
+        raise ValueError(f"Invalid email format: {email}")
+    return user_repository.find_by_email(email)
+```
+
+### Class Structure
+
+```python
+class UserService:
+    """Service for user-related operations."""
+    
+    def __init__(self, repository: UserRepository) -> None:
+        """
+        Initialize UserService.
+        
+        Args:
+            repository: The user repository for data access.
+        """
+        self._repository = repository
+    
+    async def create_user(self, data: CreateUserInput) -> User:
+        """Create a new user."""
+        # Validation
+        existing = await self._repository.find_by_email(data.email)
+        if existing:
+            raise ConflictError("Email already registered")
+        
+        # Create
+        return await self._repository.create(data)
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Circular imports
+- ❌ Star imports (`from module import *`)
+- ❌ Missing `__init__.py` files
+- ❌ Inconsistent naming
+- ❌ No type hints
+- ❌ No docstrings
+
+---
+
+## Checklist
+
+- [ ] Standard project structure
+- [ ] Proper `__init__.py` exports
+- [ ] Type hints throughout
+- [ ] Docstrings on public functions
+- [ ] PEP 8 compliant
+- [ ] pyproject.toml configured
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [python-typing.mdc](./python-typing.mdc) - Type hints
+  - [python-async.mdc](./python-async.mdc) - Async patterns
+  - [../testing/unit-testing.mdc](../testing/unit-testing.mdc) - Testing

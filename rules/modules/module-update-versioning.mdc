@@ -1,0 +1,352 @@
+---
+description: Auto-applied rule for handling module updates and version management. Guides version tracking, update process, and breaking change handling when modules are updated.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 06:49:53 EST
+alwaysApply: false
+globs: **/modules/**
+type: Behavioral Rule - Module version management guidance
+applicability: When updating modules, checking module versions, or handling module updates with breaking changes
+dependencies: []
+relatedCommands: []
+relatedRules: [module-integration-patterns.mdc, module-migration-upgrade.mdc]
+relatedStandards: [module-structure.md, project-planning/documentation-management.md]
+---
+
+# Module Update & Versioning Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Updating a module to a new version
+- Checking module version compatibility
+- Handling module breaking changes
+- Tracking module versions in projects
+- Reviewing module CHANGELOG.md
+
+---
+
+## Core Principle
+
+**Modules should be versioned, and updates should be tracked and tested.** Version tracking enables safe updates, and breaking changes should be identified and handled carefully.
+
+**Source Standard:** `standards/module-structure.md` and `standards/project-planning/documentation-management.md`
+
+---
+
+## Agent Responsibilities
+
+### 1. Version Tracking
+
+**Track module versions in projects:**
+
+#### Module Version Location
+
+**Modules should have version in:**
+- README.md metadata section
+- package.json (if applicable)
+- CHANGELOG.md entries
+
+**Example:**
+```markdown
+# Logger Module
+
+## Metadata
+- **Version:** 1.1.0
+- **Last Updated:** 12-08-2025 19:04:26 EST
+```
+
+#### Project Version Tracking
+
+**Track which module version is integrated:**
+
+**Options:**
+1. **Document in project README.md:**
+   ```markdown
+   ## Integrated Modules
+   - logger-module: v1.1.0
+   - backend-api: v1.0.0
+   ```
+
+2. **Document in project CHANGELOG.md:**
+   ```markdown
+   ## [Unreleased]
+   - Integrated logger-module v1.1.0
+   ```
+
+3. **Version file (optional):**
+   ```json
+   // .module-versions.json
+   {
+     "logger-module": "1.1.0",
+     "backend-api": "1.0.0"
+   }
+   ```
+
+### 2. Update Process
+
+**Follow this process when updating a module:**
+
+#### Step 1: Check Module CHANGELOG.md
+
+**Review changes since current version:**
+
+1. **Read Module CHANGELOG.md:**
+   - Review all changes since current version
+   - Identify breaking changes
+   - Note new features
+   - Check migration requirements
+
+2. **Check Breaking Changes:**
+   - Look for "BREAKING CHANGE" markers
+   - Review API changes
+   - Check configuration changes
+   - Note dependency changes
+
+#### Step 2: Backup Current Integration
+
+**Save current module files:**
+
+```bash
+# Backup current module
+cp -r lib/{module-name} lib/{module-name}.backup
+
+# Or commit current state
+git commit -m "chore: backup {module-name} before update"
+```
+
+#### Step 3: Update Module Files
+
+**Copy new module version:**
+
+```bash
+# Copy new version
+cp -r modules/{module-name} lib/{module-name}
+
+# Or update in place
+# (if using monorepo pattern)
+```
+
+#### Step 4: Update Dependencies
+
+**Install new/updated dependencies:**
+
+```bash
+# Check module's package.json for new dependencies
+# Install any new dependencies
+npm install {new-dep1} {new-dep2}
+
+# Update existing dependencies if needed
+npm update {dep1} {dep2}
+```
+
+#### Step 5: Handle Breaking Changes
+
+**If breaking changes exist:**
+
+1. **Review Migration Guide:**
+   - Check module's migration guide (if available)
+   - Review breaking change details
+   - Note required code changes
+
+2. **Update Code:**
+   - Update import paths if API changed
+   - Update function calls if signatures changed
+   - Update configuration if options changed
+   - Remove deprecated code
+
+3. **Test Thoroughly:**
+   - Run all tests
+   - Test affected functionality
+   - Verify no regressions
+
+#### Step 6: Verify Update
+
+**Test module functionality:**
+
+1. **Run Module Tests:**
+   ```bash
+   cd lib/{module-name}
+   npm test
+   ```
+
+2. **Test Integration:**
+   - Test module in project context
+   - Verify functionality works
+   - Check for errors
+
+3. **Update Documentation:**
+   - Update project README.md with new version
+   - Update CHANGELOG.md with update entry
+   - Document any breaking changes handled
+
+### 3. Breaking Changes
+
+**Handle breaking changes carefully:**
+
+#### Types of Breaking Changes
+
+1. **API Changes:**
+   - Function signatures changed
+   - Return types changed
+   - Exports removed or renamed
+
+2. **Configuration Changes:**
+   - Configuration options changed
+   - Required options added
+   - Option names changed
+
+3. **Dependency Changes:**
+   - New required dependencies
+   - Dependency versions changed
+   - Peer dependencies changed
+
+4. **Behavior Changes:**
+   - Default behavior changed
+   - Error handling changed
+   - Side effects changed
+
+#### Breaking Change Process
+
+1. **Identify Breaking Changes:**
+   - Read CHANGELOG.md carefully
+   - Look for "BREAKING CHANGE" markers
+   - Review migration guide
+
+2. **Plan Migration:**
+   - List all affected code
+   - Plan update steps
+   - Identify test cases
+
+3. **Execute Migration:**
+   - Update code incrementally
+   - Test after each change
+   - Verify functionality
+
+4. **Verify Migration:**
+   - Run all tests
+   - Test affected features
+   - Verify no regressions
+
+### 4. Version Compatibility
+
+**Check version compatibility:**
+
+#### Semantic Versioning
+
+**Modules should follow semantic versioning:**
+- **MAJOR** (X.0.0): Breaking changes
+- **MINOR** (0.X.0): New features, backward compatible
+- **PATCH** (0.0.X): Bug fixes, backward compatible
+
+#### Compatibility Checks
+
+1. **Same Major Version:**
+   - Minor and patch updates are usually safe
+   - Review CHANGELOG.md for changes
+   - Test after update
+
+2. **Different Major Version:**
+   - Likely has breaking changes
+   - Review migration guide
+   - Plan migration carefully
+
+3. **Dependency Versions:**
+   - Check if module dependencies changed
+   - Verify compatibility with project dependencies
+   - Update if needed
+
+### 5. Examples
+
+#### Example 1: Minor Version Update
+
+**Update:** logger-module v1.0.0 → v1.1.0
+
+**Process:**
+1. ✅ Read CHANGELOG.md - No breaking changes
+2. ✅ Backup current version
+3. ✅ Copy new version
+4. ✅ Install any new dependencies
+5. ✅ Test functionality
+6. ✅ Update version in project docs
+
+**Result:** Safe update, no code changes needed
+
+#### Example 2: Major Version Update with Breaking Changes
+
+**Update:** backend-api v1.0.0 → v2.0.0
+
+**Process:**
+1. ✅ Read CHANGELOG.md - Breaking changes identified
+2. ✅ Review migration guide
+3. ✅ Backup current version
+4. ✅ Copy new version
+5. ✅ Update code for breaking changes:
+   - Update import paths
+   - Update function calls
+   - Update configuration
+6. ✅ Install new dependencies
+7. ✅ Test thoroughly
+8. ✅ Update version in project docs
+
+**Result:** Update completed with code changes
+
+---
+
+## Integration with Other Rules
+
+This rule works with:
+
+### `module-integration-patterns.mdc`
+- Update process follows integration patterns
+
+### `module-migration-upgrade.mdc`
+- Breaking changes may require migrations
+
+---
+
+## Related Files
+
+- **Standards:**
+  - [module-structure.md](../../standards/module-structure.md) - Module structure
+  - [project-planning/documentation-management.md](../../standards/project-planning/documentation-management.md) - Documentation standards
+- **Rules:**
+  - [module-integration-patterns.mdc](./module-integration-patterns.mdc) - Integration process
+  - [module-migration-upgrade.mdc](./module-migration-upgrade.mdc) - Migration handling
+- **Modules:**
+  - `modules/*/CHANGELOG.md` - Module change history
+  - `modules/*/README.md` - Module version info
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when updating modules or checking versions.**
+
+**Agents should:**
+1. **Track module versions** in project documentation
+2. **Check CHANGELOG.md** before updating
+3. **Backup current version** before updating
+4. **Handle breaking changes** carefully
+5. **Test thoroughly** after update
+6. **Update documentation** with new version
+
+**Update checklist:**
+- [ ] Read module CHANGELOG.md
+- [ ] Identified breaking changes (if any)
+- [ ] Backed up current version
+- [ ] Copied new module version
+- [ ] Installed new/updated dependencies
+- [ ] Updated code for breaking changes
+- [ ] Tested module functionality
+- [ ] Updated project documentation
+
+**Version tracking:**
+- [ ] Module version documented in project
+- [ ] Version tracked in README.md or CHANGELOG.md
+- [ ] Breaking changes documented
+- [ ] Update process documented
+
+---
+
+*This rule ensures module updates are handled safely, with proper version tracking and breaking change management.*

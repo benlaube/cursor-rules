@@ -1,0 +1,111 @@
+---
+description: Development and build auto-healing for TypeScript/JavaScript compile errors, missing or conflicting dependencies, package manager lockfile conflicts, module resolution issues, type checking failures, cache corruption, and .env configuration problems during coding. Use this rule when errors mention 'cannot find module', 'type error', 'dependency not found', lockfile conflicts, tsconfig issues, or .env variables missing during build.
+version: 1.1.0
+created: 12-04-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs:
+type: Error Recovery Rule - Development and build auto-healing
+applicability: Build/compile/dependency errors during development
+dependencies: []
+relatedCommands: []
+relatedRules: [[../auto-heal.mdc], [../task-workflow.mdc]]
+relatedStandards: []
+---
+
+# Auto-Heal Development Rule
+
+Development and build auto-healing for compile errors, dependencies, and configuration issues.
+
+## When This Rule Applies
+
+Use this rule when errors mention:
+- `cannot find module`, `Module not found`
+- `type error`, `TS2307`, `TS2345` (TypeScript errors)
+- `dependency not found`
+- `ENOENT` (missing files during build)
+- Lockfile conflicts (npm vs yarn vs pnpm)
+- `tsconfig.json` issues
+- `.env` variables missing during build
+
+---
+
+## Recovery Strategies
+
+### 1. Missing Dependencies
+
+**Symptoms:** `Cannot find module 'X'`, `Module not found`
+
+**Recovery:**
+1. Check if dependency is in `package.json`
+2. If missing: `npm install <package>`
+3. If present: `rm -rf node_modules && npm install`
+4. For TypeScript types: `npm install -D @types/<package>`
+
+### 2. Lockfile Conflicts
+
+**Symptoms:** `ERESOLVE`, `peer dependency` errors
+
+**Recovery:**
+1. Never delete lockfile first
+2. Try: `npm install --legacy-peer-deps`
+3. If persists: Check for conflicting versions in `package.json`
+4. Last resort: `rm -rf node_modules && npm install`
+
+### 3. TypeScript Errors
+
+**Symptoms:** `TS2307`, `TS2345`, type mismatch errors
+
+**Recovery:**
+1. Run `tsc --noEmit` to identify all errors
+2. Check `tsconfig.json` paths and includes
+3. Verify types are installed: `@types/<package>`
+4. Clear TS cache: `rm -rf node_modules/.cache`
+
+### 4. Environment Variables
+
+**Symptoms:** `process.env.X is undefined`
+
+**Recovery:**
+1. Check if `.env` exists
+2. If missing: Copy from `.env.example`
+3. Verify variable names match exactly
+4. Restart dev server after changes
+
+### 5. Cache Corruption
+
+**Symptoms:** Stale errors, inconsistent builds
+
+**Recovery:**
+1. Clear node_modules cache: `rm -rf node_modules/.cache`
+2. Clear build artifacts: `rm -rf .next dist build`
+3. Reinstall: `npm ci`
+
+---
+
+## Auto-Fix Commands
+
+```bash
+# Dependency issues
+npm install
+npm install --legacy-peer-deps
+
+# Cache clearing
+rm -rf node_modules/.cache
+rm -rf .next dist build
+
+# Full reset
+rm -rf node_modules && npm install
+
+# TypeScript rebuild
+tsc --noEmit
+```
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [../auto-heal.mdc](../auto-heal.mdc) - Router to all auto-heal rules
+  - [auto-heal-runtime.mdc](./auto-heal-runtime.mdc) - Runtime issues
+  - [auto-heal-database.mdc](./auto-heal-database.mdc) - Database issues

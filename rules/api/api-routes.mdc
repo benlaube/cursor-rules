@@ -1,0 +1,240 @@
+---
+description: API route design standards for consistent, maintainable REST APIs. This rule covers route naming, HTTP methods, response formats, error handling, and documentation. Agents must follow REST conventions, use proper HTTP status codes, implement consistent error responses, and document all endpoints.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/api/**,**/routes/**
+type: API Rule - Route design standards
+applicability: API endpoint development
+dependencies: []
+relatedCommands: []
+relatedRules: [[../security/api-security.mdc], [../security/input-validation.mdc], [../typescript/zod-schemas.mdc]]
+relatedStandards: []
+---
+
+# API Routes Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Creating API endpoints
+- Designing REST APIs
+- Implementing route handlers
+- Documenting APIs
+
+---
+
+## Route Naming Conventions
+
+### Resource-Based Routes
+
+```
+GET    /api/users          # List users
+POST   /api/users          # Create user
+GET    /api/users/:id      # Get user
+PUT    /api/users/:id      # Update user
+DELETE /api/users/:id      # Delete user
+
+# Nested resources
+GET    /api/users/:id/posts      # User's posts
+POST   /api/users/:id/posts      # Create post for user
+
+# Actions (non-CRUD)
+POST   /api/users/:id/verify     # Verify user
+POST   /api/auth/login           # Login
+POST   /api/auth/logout          # Logout
+```
+
+### Naming Rules
+
+- Plural nouns: `/users`, `/posts`, `/orders`
+- Lowercase: `/api/users` not `/api/Users`
+- Kebab-case for multi-word: `/order-items`, `/user-profiles`
+- No verbs in path (use HTTP methods): `POST /users` not `POST /create-user`
+
+---
+
+## HTTP Status Codes
+
+### Success
+
+| Code | Usage |
+|------|-------|
+| 200 | Success with body |
+| 201 | Created successfully |
+| 204 | Success, no content |
+
+### Client Errors
+
+| Code | Usage |
+|------|-------|
+| 400 | Bad request / validation error |
+| 401 | Unauthorized (not authenticated) |
+| 403 | Forbidden (not authorized) |
+| 404 | Not found |
+| 409 | Conflict |
+| 422 | Unprocessable entity |
+| 429 | Too many requests |
+
+### Server Errors
+
+| Code | Usage |
+|------|-------|
+| 500 | Internal server error |
+| 502 | Bad gateway |
+| 503 | Service unavailable |
+
+---
+
+## Response Format
+
+### Success Response
+
+```typescript
+// Single resource
+{
+  "data": {
+    "id": "123",
+    "email": "user@example.com",
+    "name": "John"
+  }
+}
+
+// Collection
+{
+  "data": [
+    { "id": "1", "name": "Item 1" },
+    { "id": "2", "name": "Item 2" }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 100,
+    "hasMore": true
+  }
+}
+```
+
+### Error Response
+
+```typescript
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Validation failed",
+    "details": [
+      { "field": "email", "message": "Invalid email format" },
+      { "field": "password", "message": "Must be at least 12 characters" }
+    ]
+  }
+}
+```
+
+---
+
+## Route Handler Pattern
+
+```typescript
+// Express
+app.get('/api/users/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user = await userService.findById(id);
+    
+    if (!user) {
+      return res.status(404).json({
+        error: { code: 'NOT_FOUND', message: 'User not found' }
+      });
+    }
+    
+    res.json({ data: user });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Next.js App Router
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const user = await userService.findById(params.id);
+  
+  if (!user) {
+    return NextResponse.json(
+      { error: { code: 'NOT_FOUND', message: 'User not found' } },
+      { status: 404 }
+    );
+  }
+  
+  return NextResponse.json({ data: user });
+}
+```
+
+---
+
+## Query Parameters
+
+```typescript
+// Pagination
+GET /api/users?page=1&limit=20
+
+// Filtering
+GET /api/users?status=active&role=admin
+
+// Sorting
+GET /api/users?sort=created_at&order=desc
+
+// Search
+GET /api/users?search=john
+
+// Combined
+GET /api/users?status=active&sort=name&page=1&limit=20
+```
+
+---
+
+## Versioning
+
+```
+/api/v1/users    # Version 1
+/api/v2/users    # Version 2
+```
+
+Or via header:
+```
+Accept: application/vnd.api+json;version=2
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Verbs in URLs (`/getUsers`)
+- ❌ Inconsistent naming
+- ❌ Wrong HTTP methods
+- ❌ No error handling
+- ❌ Exposing internal errors
+- ❌ No input validation
+
+---
+
+## Checklist
+
+- [ ] RESTful resource naming
+- [ ] Proper HTTP methods used
+- [ ] Consistent response format
+- [ ] Error responses standardized
+- [ ] Input validation with Zod
+- [ ] Pagination for lists
+- [ ] API documented
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [../security/api-security.mdc](../security/api-security.mdc) - API security
+  - [../security/input-validation.mdc](../security/input-validation.mdc) - Validation
+  - [../typescript/zod-schemas.mdc](../typescript/zod-schemas.mdc) - Schema validation

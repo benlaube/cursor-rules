@@ -1,0 +1,244 @@
+---
+description: Auto-applied rule that enforces audit report standards when audit commands are executed or user-requested audits are performed. Ensures all audit reports are saved to /docs/audit/ with proper naming and structure.
+version: 1.0.0
+created: 12-04-2025
+lastUpdated: 12-04-2025 17:16:08 EST
+alwaysApply: false
+globs: 
+type: Workflow Rule - Orchestrates audit report generation
+applicability: When audit commands are executed or user requests an audit report
+dependencies: []
+relatedCommands: [audit-security.md, audit-database.md, audit-access-control.md, audit-docs.md, audit-readmes.md, full-project-health-check.md]
+relatedRules: [task-workflow.mdc, date-time.mdc]
+relatedStandards: [project-planning/documentation-management.md]
+---
+# Audit Report Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Any audit command is executed (e.g., `audit-security`, `audit-database`, `audit-access-control`)
+- User requests an audit or audit report
+- AI agent generates an audit report as part of a task
+
+---
+
+## Core Principle
+
+**All audit reports must be saved to `/docs/audit/` with standardized naming and structure.** This ensures audit reports are version-controlled, discoverable, and provide historical record.
+
+**Source Standard:** `standards/project-planning/documentation-management.md` Section 8
+
+---
+
+## Agent Responsibilities
+
+### 1. Before Generating Audit Report
+
+**1. Verify Directory Exists:**
+   - Check if `/docs/audit/` directory exists
+   - If missing, create it: `mkdir -p docs/audit`
+
+**2. Get Current Date:**
+   - Use command: `TZ=America/New_York date "+%m-%d-%Y %H:%M:%S EST"`
+   - Extract date portion for filename: `MM-DD-YYYY` format
+   - Use full timestamp for report content: `MM-DD-YYYY HH:MM:SS EST`
+   - See `.cursor/rules/date-time.mdc` Section 3 for authoritative date format
+
+**3. Determine Report Type:**
+   - Identify audit type from command name or context
+   - Examples: `security`, `database`, `access_control`, `project_health`, `user_requested`
+
+### 2. Generate Report Filename
+
+**Format:** `{audit_type}_audit_MM-DD-YYYY.md`
+
+**Examples:**
+- `security_audit_12-04-2025.md`
+- `database_audit_12-04-2025.md`
+- `access_control_audit_12-04-2025.md`
+- `project_health_audit_12-04-2025.md`
+- `user_requested_audit_12-04-2025.md` (for one-off reports)
+
+**Rules:**
+- Use `MM-DD-YYYY` format (not `YYYY-MM-DD`)
+- Use underscores, not hyphens, in audit type
+- Always include `_audit_` in filename
+- Always include date in filename
+
+### 3. Generate Report Content
+
+**Required Structure:**
+
+```markdown
+# {Audit Type} Audit Report
+
+**Generated:** MM-DD-YYYY HH:MM:SS EST
+**Auditor:** AI Agent
+**Scope:** [Brief description of what was audited]
+
+## Executive Summary
+[High-level summary of findings]
+
+## Detailed Findings
+[Detailed sections based on audit type]
+
+## Action Items
+[Prioritized list of items to address]
+
+## Recommendations
+[Suggestions for improvements]
+```
+
+**Content Requirements:**
+- Include timestamp in report content (not just filename)
+- Provide executive summary with key metrics
+- List detailed findings organized by category
+- Include prioritized action items
+- Provide actionable recommendations
+
+### 4. Save Report
+
+**Location:** `/docs/audit/{audit_type}_audit_MM-DD-YYYY.md`
+
+**Actions:**
+1. Create report file at specified location
+2. Write report content with proper structure
+3. Verify file was created successfully
+4. Report location to user in command output
+
+### 5. Update Command Output
+
+**Include in Command Output:**
+
+```
+✅ Audit complete.
+
+Summary:
+- [Key findings summary]
+
+Full report saved to: /docs/audit/{audit_type}_audit_MM-DD-YYYY.md
+```
+
+---
+
+## Integration with Audit Commands
+
+This rule should be referenced by all audit commands:
+
+- `audit-security.md` - Security audit reports
+- `audit-database.md` - Database audit reports
+- `audit-access-control.md` - Access control audit reports
+- `audit-docs.md` - Documentation audit reports
+- `audit-readmes.md` - README audit reports
+- `full-project-health-check.md` - Combined health check reports
+
+**Command Integration:**
+- Commands should check for this rule and follow its standards
+- Commands should create `/docs/audit/` if missing
+- Commands should use standardized naming convention
+- Commands should include report location in output
+
+---
+
+## Examples
+
+### Example 1: Security Audit Report
+
+**Command:** `audit-security`
+
+**Report Generated:** `/docs/audit/security_audit_12-04-2025.md`
+
+**Content:**
+```markdown
+# Security Audit Report
+
+**Generated:** 12-04-2025 17:16:08 EST
+**Auditor:** AI Agent
+**Scope:** Complete security audit of codebase, dependencies, and configuration
+
+## Executive Summary
+- Total Issues: 3
+- Critical: 0
+- High: 1
+- Medium: 2
+- Low: 0
+
+## Detailed Findings
+[Detailed security findings...]
+
+## Action Items
+1. [High] Add rate limiting to /api/users endpoint
+2. [Medium] Update dependency with known vulnerability
+...
+
+## Recommendations
+[Security improvement suggestions...]
+```
+
+### Example 2: User-Requested Audit
+
+**User Request:** "Audit the authentication system"
+
+**Report Generated:** `/docs/audit/user_requested_audit_12-04-2025.md`
+
+**Content:**
+```markdown
+# User Requested Audit Report
+
+**Generated:** 12-04-2025 17:16:08 EST
+**Auditor:** AI Agent
+**Scope:** Authentication system audit (user-requested)
+
+## Executive Summary
+[Findings summary...]
+
+## Detailed Findings
+[Authentication-specific findings...]
+
+## Action Items
+[Prioritized action items...]
+
+## Recommendations
+[Improvement suggestions...]
+```
+
+---
+
+## Related Files
+
+- **Standards:**
+  - [documentation-management.md](../../standards/project-planning/documentation-management.md) - Section 8: Audit Report Standards (authoritative source)
+- **Rules:**
+  - [date-time.mdc](./date-time.mdc) - Date format standards
+  - [task-workflow.mdc](./task-workflow.mdc) - References audit reports in Section 5
+- **Commands:**
+  - [audit-security.md](../commands/audit-security.md) - Security audit
+  - [audit-database.md](../commands/audit-database.md) - Database audit
+  - [audit-access-control.md](../commands/audit-access-control.md) - Access control audit
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when audit commands are executed or user requests audit reports.**
+
+**Agents should:**
+1. Check if `/docs/audit/` exists, create if missing
+2. Generate report filename using format: `{audit_type}_audit_MM-DD-YYYY.md`
+3. Include timestamp in both filename and report content
+4. Follow required report structure (Executive Summary, Findings, Action Items, Recommendations)
+5. Save report to `/docs/audit/` directory
+6. Include report location in command output
+
+**Validation checklist:**
+- [ ] `/docs/audit/` directory exists
+- [ ] Report filename follows format: `{audit_type}_audit_MM-DD-YYYY.md`
+- [ ] Report includes timestamp in content
+- [ ] Report follows required structure
+- [ ] Report saved to `/docs/audit/` (not `logs/`)
+- [ ] Command output includes report location
+
+---
+
+*This rule ensures all audit reports are consistently saved, named, and structured for easy discovery and historical reference.*

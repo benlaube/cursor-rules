@@ -1,0 +1,166 @@
+---
+description: Auto-applied rule for creating and modifying Cursor rules with proper metadata and structure. Applies when creating or modifying files in **/.cursor/rules/ directory.
+version: 1.3.1
+created: 12-04-2025
+lastUpdated: 12-04-2025 16:13:13 EST
+alwaysApply: false
+globs: **/.cursor/rules/**/*.mdc
+type: Documentation Maintenance Rule - Ensures Cursor rules follow standards
+applicability: When files matching globs are edited.
+dependencies: []
+relatedCommands: [[audit-documentation-metadata.md](../commands/audit-documentation-metadata.md)]
+relatedRules: [[documentation-dependency-tracking.mdc](./documentation-dependency-tracking.mdc), [version-management.mdc](./version-management.mdc), [runtime-configuration.mdc](./runtime-configuration.mdc)]
+relatedStandards: [[process/cursor-rules-standards.md](../standards/process/cursor-rules-standards.md), [project-planning/documentation-management.md](../standards/project-planning/documentation-management.md)]
+---
+
+# Cursor Rule Creation & Maintenance Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Creating a new file in `.cursor/rules/` directory
+- Modifying any existing `.cursor/rules/*.mdc` file
+- Any Cursor rule file is opened for editing
+
+---
+
+## Core Principle
+
+**Cursor rules must be well-structured, consistently formatted, and properly documented.** This rule enforces the standards defined in `standards/process/cursor-rules-standards.md`.
+
+**CRITICAL INSTRUCTION:** The standard is the Single Source of Truth. **Always read `standards/process/cursor-rules-standards.md`** to get the latest definitions, valid types, and templates before creating or modifying rules.
+
+---
+
+## Agent Responsibilities
+
+### 1. Before Creating a New Rule
+
+**1. Read the Standard:**
+   - Read `standards/process/cursor-rules-standards.md` to understand rule types and naming conventions.
+
+**2. Validation Checks:**
+   - **Rule vs Command:** Ensure behavior applies automatically (Rule) vs user-invoked (Command).
+   - **Duplication:** Search `.cursor/rules/` to avoid duplicates.
+   - **Nested Rules:** Determine if this should be a nested rule (domain-specific) located in a subdirectory. (See Standard Section 15)
+   - **Length:** Target 100-300 lines. Split if larger.
+
+**3. Determine Rule Type:**
+   - Select one of the 8 standard rule types defined in `cursor-rules-standards.md` Section 4.
+
+### 2. While Creating/Modifying a Rule
+
+**MANDATORY:** Use the templates defined in `standards/process/cursor-rules-standards.md` Section 3.
+
+**Quick Reference - YAML Frontmatter:**
+```yaml
+---
+description: Brief description of what this rule does and when to apply it (1-2 sentences)
+version: X.Y.Z (semantic versioning)
+created: MM-DD-YYYY (creation date)
+lastUpdated: MM-DD-YYYY HH:MM:SS EST (date and time in EST timezone)
+alwaysApply: true/false (whether rule applies to all files or just matching globs)
+globs: file/pattern (REQUIRED - use empty string "" if alwaysApply is true, NO quotes)
+type: Rule Type - Brief description (Must match standard types)
+applicability: When/where this rule applies
+dependencies: [file1.md, file2.md] (optional - list of dependencies)
+relatedCommands: [command1.md] (optional)
+relatedRules: [rule1.mdc] (optional)
+relatedStandards: [standard1.md] (optional)
+---
+```
+
+**Quick Reference - Content Structure:**
+1. **When This Rule Applies:** Clear trigger conditions.
+2. **Core Principle:** High-level purpose.
+3. **Agent Responsibilities:** Detailed actionable guidance.
+4. **Examples:** Optional.
+5. **Related Files:** Cross-references.
+6. **How to Use:** Summary instructions.
+
+**Refer to `standards/process/cursor-rules-standards.md` Section 3 for detailed field definitions and validation rules.**
+
+### 3. Creating Nested Rules (Domain-Specific "Roles")
+
+**When:** For domain-specific guidance (frontend, backend, etc.) that applies to specific subdirectories.
+
+**Instructions:**
+1. Follow **Nested Rules Strategy** in `standards/process/cursor-rules-standards.md` Section 15.
+2. Use the Nested Rule Template from Section 15.6 of the standard.
+3. Keep concise (50-150 lines).
+
+### 4. After Creating/Modifying a Rule
+
+**MANDATORY STEPS:**
+
+#### Step 4.1: Validate Rule Structure
+- [ ] YAML frontmatter is valid and complete (Check against Standard Section 3.1)
+- [ ] `description` explains WHAT and WHEN
+- [ ] `globs` is present and accurate
+- [ ] `type` is one of the 8 standard types
+- [ ] All required content sections are present
+
+#### Step 4.2: Update Dependencies
+- [ ] Update `relatedCommands`, `relatedRules`, `relatedStandards`
+- [ ] Check reverse dependencies (files referencing this rule)
+
+#### Step 4.3: Update Related Documentation
+- [ ] Update `CHANGELOG.md` with entry and timestamp
+- [ ] Update `AGENTS.md` (if workflow affected)
+- [ ] Update Integration Guides (if applicable)
+
+#### Step 4.4: Test
+- [ ] Verify rule triggers correctly based on `globs`
+
+---
+
+## Version Management
+
+**Always update both:**
+- `version:` field in YAML frontmatter
+- `lastUpdated:` field in YAML frontmatter
+
+**Versioning Rules:** See `standards/process/cursor-rules-standards.md` Section 6.
+
+---
+
+## Integration with Other Rules
+
+This rule works in conjunction with:
+- **`documentation-dependency-tracking.mdc`**: Tracks dependencies when documentation is modified.
+- **`version-management.mdc`**: Defines version numbering standards for all documentation.
+- **`runtime-configuration.mdc`**: Defines runtime environment and configuration standards.
+- **`audit-documentation-rules-metadata.md`**: Validates metadata completeness.
+
+---
+
+## Related Files
+
+- **Commands:**
+  - [audit-documentation-metadata.md](../commands/audit-documentation-metadata.md) - Audits rule metadata
+- **Rules:**
+  - [documentation-dependency-tracking.mdc](./documentation-dependency-tracking.mdc) - Tracks dependencies
+  - [version-management.mdc](./version-management.mdc) - Versioning standards for all documentation
+  - [runtime-configuration.mdc](./runtime-configuration.mdc) - Runtime environment configuration
+- **Standards:**
+  - [cursor-rules-standards.md](../../standards/process/cursor-rules-standards.md) - **GOVERNING STANDARD**
+  - [documentation-management.md](../../standards/project-planning/documentation-management.md) - Documentation management standards
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when creating or modifying Cursor rules (`.cursor/rules/*.mdc` files).**
+
+**Agents should:**
+1. **READ THE STANDARD FIRST:** `standards/process/cursor-rules-standards.md`.
+2. Verify YAML frontmatter against the standard.
+3. Use standard templates for content.
+4. Update version and timestamps on every change.
+5. Update `CHANGELOG.md`.
+
+**Validation checklist:**
+- [ ] Metadata matches Standard Section 3.1
+- [ ] Content matches Standard Section 3.2
+- [ ] Type matches Standard Section 4
+- [ ] Versioning matches Standard Section 6

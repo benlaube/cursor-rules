@@ -1,0 +1,154 @@
+---
+description: Runtime and launch-time auto-healing for application port conflicts (EADDRINUSE), Docker/Supabase container startup failures, stuck or zombie processes, high CPU/memory usage, network timeouts, API connectivity issues, and log-driven debugging. Use this rule when errors mention 'port already in use', 'container failed to start', process won't stop, 'ECONNREFUSED' to external APIs, or when the app launches but crashes immediately.
+version: 1.1.0
+created: 12-04-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs:
+type: Error Recovery Rule - Runtime and launch auto-healing
+applicability: Port/container/process issues at runtime
+dependencies: []
+relatedCommands: [[../../commands/launch.md], [../../commands/launch-debug-fix.md]]
+relatedRules: [[../auto-heal.mdc], [../task-workflow.mdc], [../runtime-configuration.mdc]]
+relatedStandards: [[../../standards/architecture/supabase-local-setup.md]]
+---
+
+# Auto-Heal Runtime Rule
+
+Runtime and launch-time auto-healing for ports, containers, processes, and network issues.
+
+## When This Rule Applies
+
+Use this rule when errors mention:
+- `EADDRINUSE` (port already in use)
+- `port XXXX already in use`
+- `container failed to start`
+- `docker` or `supabase` container issues
+- Process stuck/won't stop
+- `ECONNREFUSED` (to external APIs)
+- High CPU/memory usage
+- Application crashes after launch
+
+---
+
+## Recovery Strategies
+
+### 1. Port Conflicts
+
+**Symptoms:** `EADDRINUSE`, `port 3000 already in use`
+
+**Recovery:**
+1. Find process using port: `lsof -i :3000`
+2. Kill process: `kill -9 <PID>`
+3. If persistent: Check for zombie processes
+4. **CRITICAL:** Never blindly kill all processes - identify the specific one
+
+```bash
+# Find and kill process on port
+lsof -i :3000
+kill -9 <PID>
+```
+
+### 2. Container Issues (Docker/Supabase)
+
+**Symptoms:** Container won't start, health check failing
+
+**Recovery:**
+1. Check container status: `docker ps -a` or `supabase status`
+2. Check logs: `docker logs <container>` or `supabase db logs`
+3. Restart container: `docker restart <container>` or `supabase stop && supabase start`
+4. **CRITICAL:** Only affect current project's containers
+
+```bash
+# Supabase-specific
+supabase status
+supabase stop
+supabase start
+
+# Docker-specific (identify container first)
+docker ps -a
+docker logs <container_name>
+docker restart <container_name>
+```
+
+### 3. Stuck Processes
+
+**Symptoms:** Process won't stop, zombie processes
+
+**Recovery:**
+1. Find process: `ps aux | grep <process_name>`
+2. Try graceful stop first: `kill <PID>`
+3. Force kill if needed: `kill -9 <PID>`
+4. Check for child processes
+
+### 4. Network/API Issues
+
+**Symptoms:** `ECONNREFUSED`, timeout errors
+
+**Recovery:**
+1. Check if service is running (database, external API)
+2. Verify environment variables (URLs, ports)
+3. Check firewall/network settings
+4. Test connectivity: `curl <url>`
+
+### 5. Memory/CPU Issues
+
+**Symptoms:** High memory usage, slow performance
+
+**Recovery:**
+1. Identify heavy processes: `top` or `htop`
+2. Restart dev server
+3. Clear caches and build artifacts
+4. Check for memory leaks in code
+
+---
+
+## Container Isolation Rules (CRITICAL)
+
+When working with containers in multi-project environments:
+
+1. **Never use broad stop commands:**
+   - ❌ `docker stop $(docker ps -q)` - Affects ALL projects
+   - ✅ `docker stop <specific_container>` - Project-specific
+
+2. **For Supabase:**
+   - ✅ `supabase stop` - Only stops current project
+   - Always run from project root with `supabase/` directory
+
+3. **Identify before stopping:**
+   - Check which project owns the container
+   - Ask user if unsure
+
+---
+
+## Auto-Fix Commands
+
+```bash
+# Port issues
+lsof -i :3000
+kill -9 <PID>
+
+# Supabase containers
+supabase status
+supabase stop && supabase start
+
+# Docker containers
+docker ps -a
+docker restart <container_name>
+
+# Process management
+ps aux | grep node
+kill <PID>
+```
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [../auto-heal.mdc](../auto-heal.mdc) - Router to all auto-heal rules
+  - [auto-heal-dev.mdc](./auto-heal-dev.mdc) - Build issues
+  - [auto-heal-database.mdc](./auto-heal-database.mdc) - Database issues
+  - [../runtime-configuration.mdc](../runtime-configuration.mdc) - Container management rules
+- **Standards:**
+  - [supabase-local-setup.md](../../../standards/architecture/supabase-local-setup.md) - Supabase container guidelines

@@ -1,0 +1,246 @@
+---
+description: Design pattern standards for implementing common software patterns. This rule covers repository pattern, service layer, dependency injection, and factory patterns. Agents must use appropriate patterns for the use case, maintain separation of concerns, and follow established patterns in the codebase.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/services/**,**/repositories/**,**/factories/**,**/patterns/**
+type: Architecture Rule - Design patterns
+applicability: Application architecture
+dependencies: []
+relatedCommands: []
+relatedRules: [[state-management.mdc], [api-design.mdc]]
+relatedStandards: []
+---
+
+# Design Patterns Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Structuring application code
+- Implementing business logic
+- Creating reusable components
+- Refactoring existing code
+
+---
+
+## Core Principles
+
+1. **Separation of concerns** - Single responsibility
+2. **Dependency inversion** - Depend on abstractions
+3. **Composition over inheritance** - Prefer flexible composition
+4. **Don't over-engineer** - Use patterns when they add value
+
+---
+
+## Repository Pattern
+
+**Purpose:** Abstract data access layer
+
+```typescript
+// Interface
+interface UserRepository {
+  findById(id: string): Promise<User | null>;
+  findByEmail(email: string): Promise<User | null>;
+  create(data: CreateUserInput): Promise<User>;
+  update(id: string, data: UpdateUserInput): Promise<User>;
+  delete(id: string): Promise<void>;
+}
+
+// Implementation
+class PostgresUserRepository implements UserRepository {
+  constructor(private db: Database) {}
+  
+  async findById(id: string): Promise<User | null> {
+    return this.db.query('SELECT * FROM users WHERE id = $1', [id]);
+  }
+  
+  async create(data: CreateUserInput): Promise<User> {
+    const { email, name, password } = data;
+    return this.db.query(
+      'INSERT INTO users (email, name, password) VALUES ($1, $2, $3) RETURNING *',
+      [email, name, password]
+    );
+  }
+}
+```
+
+---
+
+## Service Layer Pattern
+
+**Purpose:** Encapsulate business logic
+
+```typescript
+class UserService {
+  constructor(
+    private userRepo: UserRepository,
+    private emailService: EmailService,
+  ) {}
+  
+  async register(input: RegisterInput): Promise<User> {
+    // Validation
+    const existing = await this.userRepo.findByEmail(input.email);
+    if (existing) {
+      throw new ConflictError('Email already registered');
+    }
+    
+    // Business logic
+    const hashedPassword = await hashPassword(input.password);
+    
+    // Data access
+    const user = await this.userRepo.create({
+      ...input,
+      password: hashedPassword,
+    });
+    
+    // Side effects
+    await this.emailService.sendWelcome(user);
+    
+    return user;
+  }
+}
+```
+
+---
+
+## Dependency Injection
+
+**Purpose:** Decouple components for testability
+
+```typescript
+// Container setup
+class Container {
+  private instances = new Map();
+  
+  register<T>(key: string, factory: () => T) {
+    this.instances.set(key, factory);
+  }
+  
+  resolve<T>(key: string): T {
+    const factory = this.instances.get(key);
+    return factory();
+  }
+}
+
+// Registration
+const container = new Container();
+container.register('db', () => new Database(config));
+container.register('userRepo', () => new PostgresUserRepository(container.resolve('db')));
+container.register('userService', () => new UserService(
+  container.resolve('userRepo'),
+  container.resolve('emailService')
+));
+
+// Usage
+const userService = container.resolve<UserService>('userService');
+```
+
+---
+
+## Factory Pattern
+
+**Purpose:** Create objects without specifying exact class
+
+```typescript
+interface NotificationChannel {
+  send(message: string): Promise<void>;
+}
+
+class NotificationFactory {
+  static create(type: 'email' | 'sms' | 'push'): NotificationChannel {
+    switch (type) {
+      case 'email':
+        return new EmailChannel();
+      case 'sms':
+        return new SmsChannel();
+      case 'push':
+        return new PushChannel();
+      default:
+        throw new Error(`Unknown channel: ${type}`);
+    }
+  }
+}
+
+// Usage
+const channel = NotificationFactory.create(user.preferredChannel);
+await channel.send(message);
+```
+
+---
+
+## Strategy Pattern
+
+**Purpose:** Define a family of interchangeable algorithms
+
+```typescript
+interface PricingStrategy {
+  calculate(basePrice: number, quantity: number): number;
+}
+
+class RegularPricing implements PricingStrategy {
+  calculate(basePrice: number, quantity: number): number {
+    return basePrice * quantity;
+  }
+}
+
+class BulkPricing implements PricingStrategy {
+  calculate(basePrice: number, quantity: number): number {
+    const discount = quantity >= 100 ? 0.2 : quantity >= 50 ? 0.1 : 0;
+    return basePrice * quantity * (1 - discount);
+  }
+}
+
+class OrderCalculator {
+  constructor(private strategy: PricingStrategy) {}
+  
+  calculateTotal(items: OrderItem[]): number {
+    return items.reduce(
+      (sum, item) => sum + this.strategy.calculate(item.price, item.quantity),
+      0
+    );
+  }
+}
+```
+
+---
+
+## When to Use Patterns
+
+| Pattern | Use When |
+|---------|----------|
+| Repository | Multiple data sources, testability needed |
+| Service | Complex business logic, cross-cutting concerns |
+| Factory | Object creation is complex or varies |
+| Strategy | Multiple algorithms for same task |
+| Singleton | Shared state, expensive resources |
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Patterns for pattern's sake
+- ❌ God objects (too many responsibilities)
+- ❌ Deep inheritance hierarchies
+- ❌ Tight coupling between layers
+- ❌ Anemic domain models
+
+---
+
+## Checklist
+
+- [ ] Business logic in services
+- [ ] Data access in repositories
+- [ ] Dependencies injected
+- [ ] Interfaces defined for abstractions
+- [ ] Single responsibility maintained
+- [ ] Testable without mocking implementation details
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [state-management.mdc](./state-management.mdc) - State patterns
+  - [api-design.mdc](./api-design.mdc) - API architecture

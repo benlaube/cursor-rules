@@ -1,0 +1,203 @@
+---
+description: Database schema enforcement standards for consistent, documented database design. This rule covers table naming, column requirements, comments, timestamps, and migration practices. Agents must use COMMENT ON statements for all tables and columns, include created_at/updated_at timestamps, use descriptive naming, and maintain schema documentation.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/*.sql,**/migrations/**
+type: Database Rule - Schema enforcement
+applicability: Database schema changes
+dependencies: []
+relatedCommands: []
+relatedRules: [[../supabase/supabase-rls.mdc], [../workflow/task-workflow.mdc]]
+relatedStandards: [[database/schema.md]]
+---
+
+# Database Schema Enforcement Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Creating database tables
+- Adding columns
+- Writing migrations
+- Modifying schema
+
+---
+
+## Core Requirements
+
+### 1. COMMENT ON Statements (MANDATORY)
+
+Every table and column MUST have a description:
+
+```sql
+-- Create table with comments
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) NOT NULL UNIQUE,
+  name VARCHAR(100) NOT NULL,
+  role VARCHAR(50) NOT NULL DEFAULT 'user',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Table comment
+COMMENT ON TABLE users IS 'Stores user account information and profile data';
+
+-- Column comments
+COMMENT ON COLUMN users.id IS 'Unique identifier for the user';
+COMMENT ON COLUMN users.email IS 'User email address, used for authentication';
+COMMENT ON COLUMN users.name IS 'User display name';
+COMMENT ON COLUMN users.role IS 'User role: user, admin, or moderator';
+COMMENT ON COLUMN users.created_at IS 'Timestamp when user was created';
+COMMENT ON COLUMN users.updated_at IS 'Timestamp of last user update';
+```
+
+### 2. Timestamp Columns (MANDATORY)
+
+Every table MUST have:
+
+```sql
+created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+```
+
+### 3. Updated Timestamp Trigger
+
+```sql
+-- Create trigger function (once per database)
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Apply to each table
+CREATE TRIGGER users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at();
+```
+
+---
+
+## Naming Conventions
+
+### Tables
+- Lowercase, plural: `users`, `posts`, `order_items`
+- Snake_case for multi-word: `user_profiles`, `payment_methods`
+
+### Columns
+- Lowercase, snake_case: `first_name`, `created_at`
+- Boolean: prefix with `is_` or `has_`: `is_active`, `has_verified`
+- Foreign keys: singular table name + `_id`: `user_id`, `post_id`
+
+### Indexes
+- Pattern: `idx_{table}_{column(s)}`
+- Example: `idx_users_email`, `idx_posts_author_created`
+
+---
+
+## Migration Standards
+
+### File Naming
+
+```
+migrations/
+  20251208100000_create_users_table.sql
+  20251208100100_add_posts_table.sql
+  20251208100200_add_user_role_column.sql
+```
+
+### Migration Structure
+
+```sql
+-- Migration: Add user_profiles table
+-- Description: Creates user profile extension table
+-- Author: Developer Name
+-- Date: 2025-12-08
+
+-- Up Migration
+CREATE TABLE user_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  bio TEXT,
+  avatar_url VARCHAR(500),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT user_profiles_user_id_unique UNIQUE (user_id)
+);
+
+-- Enable RLS
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Add comments
+COMMENT ON TABLE user_profiles IS 'Extended profile information for users';
+COMMENT ON COLUMN user_profiles.user_id IS 'Reference to the users table';
+COMMENT ON COLUMN user_profiles.bio IS 'User biography text';
+COMMENT ON COLUMN user_profiles.avatar_url IS 'URL to user avatar image';
+
+-- Add trigger
+CREATE TRIGGER user_profiles_updated_at
+  BEFORE UPDATE ON user_profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at();
+
+-- Add indexes
+CREATE INDEX idx_user_profiles_user_id ON user_profiles(user_id);
+```
+
+---
+
+## CHANGELOG-DATABASE.md
+
+Update after every schema change:
+
+```markdown
+# Database Changelog
+
+## [Unreleased]
+
+### 2025-12-08 10:00:00 - Added user_profiles table
+- Created `user_profiles` table with bio and avatar fields
+- Added foreign key to `users` table
+- Enabled RLS
+- Migration: `20251208100200_add_user_profiles.sql`
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Tables without comments
+- ❌ Missing created_at/updated_at
+- ❌ Abbreviated column names
+- ❌ No foreign key constraints
+- ❌ Missing indexes on foreign keys
+- ❌ RLS not enabled
+
+---
+
+## Checklist
+
+- [ ] Table has COMMENT ON statement
+- [ ] All columns have COMMENT ON statements
+- [ ] created_at and updated_at columns present
+- [ ] updated_at trigger created
+- [ ] RLS enabled (for Supabase)
+- [ ] Foreign keys have indexes
+- [ ] CHANGELOG-DATABASE.md updated
+- [ ] Descriptive naming used
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [../supabase/supabase-rls.mdc](../supabase/supabase-rls.mdc) - RLS policies
+  - [../workflow/task-workflow.mdc](../workflow/task-workflow.mdc) - Workflow integration
+- **Standards:**
+  - [schema.md](../../standards/database/schema.md) - Schema standards

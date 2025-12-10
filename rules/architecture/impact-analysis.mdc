@@ -1,0 +1,89 @@
+---
+description: Requires pre-change impact analysis for any domain data object before modifications
+version: 1.0.0
+created: 12-04-2025
+lastUpdated: 12-04-2025 18:20:44 EST
+alwaysApply: false
+globs: **/db/**, **/schema/**, **/models/**, **/types/**, **/api/**, **/components/**, **/services/**
+type: Workflow Rule - Impact analysis for data changes
+applicability: When modifying any domain data object or files that consume domain data
+dependencies: []
+relatedCommands: [update-data-model-map.md]
+relatedRules: [data-model-integrity.mdc, database-schema-enforcement.mdc, ai-interaction-rules.mdc, task-workflow.mdc]
+relatedStandards: [database/data-model-map-standard.md, database/schema.md]
+---
+
+# Impact Analysis Rule
+
+## When This Rule Applies
+
+Applies before modifying any domain data object or files that consume domain data:
+- `/db/**`, `/schema/**`, `/models/**`, `/types/**`, `/api/**`, `/components/**`, `/services/**`
+- Migrations (`**/migrations/**/*.sql`, `supabase/migrations/**/*.sql`)
+
+---
+
+## Core Principle
+
+**No data change without understanding downstream impact.** Agents must inventory all usages of a domain object and summarize risk before editing.
+
+---
+
+## Agent Responsibilities (Pre-change)
+
+1. **Identify target objects:** Extract domain object names from planned changes (e.g., Lead, Order).
+2. **Search the repo:** For each object name, search all files:
+   - Models/schemas
+   - API endpoints
+   - Components
+   - Services
+   - Types/DTOs
+3. **Summarize impact:** Produce a short impact report per object:
+   - Where defined (paths)
+   - Where used (API endpoints, components, services)
+   - Likely breakage points (filters, notifications, joins, validations)
+4. **Consult data_model_map.json:** Read current notes for the object to understand critical dependencies.
+5. **Plan changes:** Note required coordinated updates (e.g., filters, notifications, analytics).
+
+---
+
+## Output Format (Impact Report)
+
+```
+ImpactAnalysis for Lead
+- Defined in: supabase/migrations/..., src/models/Lead.ts, src/types/lead.ts
+- Used in APIs: src/app/api/leads/route.ts (list/create), src/app/api/leads/[id]/route.ts (get/update)
+- Used in Components: src/components/LeadTable.tsx (status filter), src/components/LeadForm.tsx (status select)
+- Used in Services: src/services/lead-notifications.ts (on status change), src/services/lead-analytics.ts (status distribution)
+- Critical Notes: Changing Lead.status affects LeadTable filters and lead-notifications triggers.
+```
+
+---
+
+## Enforcement
+
+Agents MUST run Impact Analysis **before** any data-layer edit. The resulting impact summary should inform:
+- Updates to `data_model_map.json` notes
+- Coordinated code changes across usages
+- Targeted tests selection
+
+---
+
+## Integration with Other Rules
+
+- **data-model-integrity.mdc:** Requires Impact Analysis before updating data_model_map and code.
+- **database-schema-enforcement.mdc:** Schema changes must also update map and changelog.
+- **ai-interaction-rules.mdc / task-workflow.mdc:** Reference this rule for data-layer edits.
+
+---
+
+## Validation Checklist
+- [ ] Searched for all occurrences of the domain object
+- [ ] Listed definitions and usages (API, components, services)
+- [ ] Identified critical breakage points
+- [ ] Reviewed existing notes in `data_model_map.json`
+- [ ] Planned coordinated changes and tests
+
+---
+
+*This rule prevents isolated changes by forcing agents to understand and document the impact of any data object modification before editing.* 

@@ -1,0 +1,247 @@
+---
+description: End-to-end testing standards for testing complete user workflows. This rule covers browser automation, test scenarios, page objects, waiting strategies, and visual testing. Agents must write E2E tests for critical user journeys, use proper waiting strategies, implement page object patterns, and ensure tests are stable and maintainable.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/e2e/**,**/*.e2e.test.{ts,js},**/cypress/**,**/playwright/**
+type: Testing Rule - E2E testing standards
+applicability: E2E test development
+dependencies: []
+relatedCommands: []
+relatedRules: [[unit-testing.mdc], [integration-testing.mdc]]
+relatedStandards: []
+---
+
+# E2E Testing Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Writing browser-based tests
+- Testing complete user workflows
+- Automating UI interactions
+- Setting up E2E test infrastructure
+
+---
+
+## Core Principles
+
+1. **Test user journeys** - Focus on critical paths
+2. **Stable selectors** - Use data-testid attributes
+3. **Proper waiting** - Wait for elements, not arbitrary time
+4. **Isolated tests** - Each test starts fresh
+
+---
+
+## Test Structure (Playwright)
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('Authentication', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+  
+  test('user can sign up and log in', async ({ page }) => {
+    // Sign up
+    await page.click('[data-testid="signup-link"]');
+    await page.fill('[data-testid="email-input"]', 'new@example.com');
+    await page.fill('[data-testid="password-input"]', 'SecurePass123!');
+    await page.click('[data-testid="signup-button"]');
+    
+    // Verify redirect to dashboard
+    await expect(page).toHaveURL('/dashboard');
+    await expect(page.locator('[data-testid="welcome-message"]'))
+      .toContainText('Welcome');
+  });
+  
+  test('shows error for invalid credentials', async ({ page }) => {
+    await page.click('[data-testid="login-link"]');
+    await page.fill('[data-testid="email-input"]', 'wrong@example.com');
+    await page.fill('[data-testid="password-input"]', 'wrongpassword');
+    await page.click('[data-testid="login-button"]');
+    
+    await expect(page.locator('[data-testid="error-message"]'))
+      .toBeVisible();
+  });
+});
+```
+
+---
+
+## Page Objects Pattern
+
+```typescript
+// pages/LoginPage.ts
+import { Page, Locator } from '@playwright/test';
+
+export class LoginPage {
+  readonly page: Page;
+  readonly emailInput: Locator;
+  readonly passwordInput: Locator;
+  readonly submitButton: Locator;
+  readonly errorMessage: Locator;
+  
+  constructor(page: Page) {
+    this.page = page;
+    this.emailInput = page.locator('[data-testid="email-input"]');
+    this.passwordInput = page.locator('[data-testid="password-input"]');
+    this.submitButton = page.locator('[data-testid="login-button"]');
+    this.errorMessage = page.locator('[data-testid="error-message"]');
+  }
+  
+  async goto() {
+    await this.page.goto('/login');
+  }
+  
+  async login(email: string, password: string) {
+    await this.emailInput.fill(email);
+    await this.passwordInput.fill(password);
+    await this.submitButton.click();
+  }
+}
+
+// Usage in test
+test('login flow', async ({ page }) => {
+  const loginPage = new LoginPage(page);
+  await loginPage.goto();
+  await loginPage.login('user@example.com', 'password');
+  await expect(page).toHaveURL('/dashboard');
+});
+```
+
+---
+
+## Waiting Strategies
+
+### Good: Wait for Elements
+
+```typescript
+// Wait for element to be visible
+await expect(page.locator('[data-testid="content"]')).toBeVisible();
+
+// Wait for navigation
+await page.waitForURL('/dashboard');
+
+// Wait for network idle
+await page.waitForLoadState('networkidle');
+
+// Wait for specific response
+await page.waitForResponse(response => 
+  response.url().includes('/api/users') && response.status() === 200
+);
+```
+
+### Bad: Arbitrary Waits
+
+```typescript
+// Never do this
+await page.waitForTimeout(5000);
+```
+
+---
+
+## Test Data Attributes
+
+```tsx
+// In React components - add data-testid
+<button data-testid="submit-button" onClick={handleSubmit}>
+  Submit
+</button>
+
+<input 
+  data-testid="email-input"
+  type="email"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+/>
+```
+
+---
+
+## Visual Testing
+
+```typescript
+test('homepage renders correctly', async ({ page }) => {
+  await page.goto('/');
+  await expect(page).toHaveScreenshot('homepage.png');
+});
+
+test('login form styling', async ({ page }) => {
+  await page.goto('/login');
+  await expect(page.locator('form')).toHaveScreenshot('login-form.png');
+});
+```
+
+---
+
+## Test Configuration
+
+```typescript
+// playwright.config.ts
+import { PlaywrightTestConfig } from '@playwright/test';
+
+const config: PlaywrightTestConfig = {
+  testDir: './e2e',
+  timeout: 30000,
+  retries: process.env.CI ? 2 : 0,
+  use: {
+    baseURL: 'http://localhost:3000',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+  },
+  projects: [
+    { name: 'chromium', use: { browserName: 'chromium' } },
+    { name: 'firefox', use: { browserName: 'firefox' } },
+  ],
+  webServer: {
+    command: 'npm run dev',
+    port: 3000,
+    reuseExistingServer: !process.env.CI,
+  },
+};
+
+export default config;
+```
+
+---
+
+## Critical User Journeys to Test
+
+1. **Authentication:** Sign up, login, logout, password reset
+2. **Core Features:** Main user workflows
+3. **Payments:** Checkout, subscription
+4. **Error States:** Form validation, API errors
+5. **Responsive:** Mobile and desktop views
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Using arbitrary timeouts
+- ❌ Fragile CSS selectors
+- ❌ Tests that depend on order
+- ❌ Testing every UI detail
+- ❌ No retries in CI
+- ❌ Missing test data cleanup
+
+---
+
+## Security Checklist
+
+- [ ] Critical journeys covered
+- [ ] data-testid attributes used
+- [ ] Proper waiting strategies
+- [ ] Page objects implemented
+- [ ] Tests run in CI
+- [ ] Multiple browsers tested
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [unit-testing.mdc](./unit-testing.mdc) - Unit tests
+  - [integration-testing.mdc](./integration-testing.mdc) - Integration tests

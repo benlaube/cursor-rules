@@ -1,0 +1,273 @@
+---
+description: Test data management standards for creating, maintaining, and cleaning up test data. This rule covers factory patterns, fixtures, seeding strategies, and data isolation. Agents must use factory functions for test data, implement proper cleanup, avoid hardcoded values, and ensure test data doesn't leak between tests.
+version: 1.0.0
+created: 12-08-2025
+lastUpdated: 12-08-2025 10:00:00 EST
+alwaysApply: false
+globs: **/test/**,**/tests/**,**/fixtures/**,**/factories/**
+type: Testing Rule - Test data management
+applicability: Test data creation and management
+dependencies: []
+relatedCommands: []
+relatedRules: [[unit-testing.mdc], [integration-testing.mdc]]
+relatedStandards: []
+---
+
+# Test Data Management Rule
+
+## When This Rule Applies
+
+This rule applies when:
+- Creating test data
+- Setting up fixtures
+- Writing factory functions
+- Managing test database state
+
+---
+
+## Core Principles
+
+1. **Factories over fixtures** - Generate data dynamically
+2. **Unique data** - Avoid collisions between tests
+3. **Clean up** - Reset state after tests
+4. **Minimal data** - Only create what's needed
+
+---
+
+## Factory Pattern
+
+### Basic Factory
+
+```typescript
+// factories/user.ts
+import { faker } from '@faker-js/faker';
+
+export function createUserData(overrides: Partial<CreateUserInput> = {}): CreateUserInput {
+  return {
+    email: faker.internet.email(),
+    name: faker.person.fullName(),
+    password: faker.internet.password({ length: 16 }),
+    ...overrides,
+  };
+}
+
+export async function createUser(
+  db: Database,
+  overrides: Partial<CreateUserInput> = {}
+): Promise<User> {
+  const data = createUserData(overrides);
+  return db.users.create(data);
+}
+```
+
+### Factory with Relations
+
+```typescript
+// factories/post.ts
+export async function createPost(
+  db: Database,
+  overrides: Partial<CreatePostInput> = {}
+): Promise<Post> {
+  // Create author if not provided
+  const author = overrides.authorId 
+    ? await db.users.findById(overrides.authorId)
+    : await createUser(db);
+  
+  return db.posts.create({
+    title: faker.lorem.sentence(),
+    content: faker.lorem.paragraphs(3),
+    authorId: author.id,
+    ...overrides,
+  });
+}
+```
+
+---
+
+## Test Setup Helpers
+
+### Scenario Builders
+
+```typescript
+// test-utils/scenarios.ts
+export async function setupAuthenticatedUser(db: Database) {
+  const user = await createUser(db);
+  const token = generateAuthToken(user);
+  
+  return { user, token };
+}
+
+export async function setupBlogWithPosts(db: Database, postCount = 5) {
+  const author = await createUser(db);
+  const posts = await Promise.all(
+    Array.from({ length: postCount }, () => 
+      createPost(db, { authorId: author.id })
+    )
+  );
+  
+  return { author, posts };
+}
+```
+
+### Usage in Tests
+
+```typescript
+describe('PostController', () => {
+  let scenario: Awaited<ReturnType<typeof setupBlogWithPosts>>;
+  
+  beforeEach(async () => {
+    scenario = await setupBlogWithPosts(db);
+  });
+  
+  it('should list posts by author', async () => {
+    const posts = await controller.getPostsByAuthor(scenario.author.id);
+    expect(posts).toHaveLength(5);
+  });
+});
+```
+
+---
+
+## Database Cleanup
+
+### Transaction Rollback
+
+```typescript
+describe('UserService', () => {
+  beforeEach(async () => {
+    await db.beginTransaction();
+  });
+  
+  afterEach(async () => {
+    await db.rollbackTransaction();
+  });
+  
+  it('should create user', async () => {
+    // Changes automatically rolled back
+  });
+});
+```
+
+### Table Truncation
+
+```typescript
+// test-utils/cleanup.ts
+export async function cleanDatabase(db: Database) {
+  // Truncate in correct order for foreign keys
+  await db.raw('TRUNCATE posts, users CASCADE');
+}
+
+// In tests
+beforeEach(async () => {
+  await cleanDatabase(db);
+});
+```
+
+---
+
+## Fixtures vs Factories
+
+### When to Use Fixtures
+
+- Static reference data (countries, categories)
+- Complex scenarios that rarely change
+- Snapshot data for specific tests
+
+```typescript
+// fixtures/countries.json
+[
+  { "code": "US", "name": "United States" },
+  { "code": "GB", "name": "United Kingdom" }
+]
+```
+
+### When to Use Factories
+
+- Entity data (users, posts, orders)
+- Dynamic data that needs uniqueness
+- Tests that create and modify data
+
+---
+
+## Avoiding Test Data Issues
+
+### Unique Identifiers
+
+```typescript
+// Good: Unique values
+email: `test-${Date.now()}-${Math.random()}@example.com`
+email: faker.internet.email()
+
+// Bad: Static values that may collide
+email: 'test@example.com'
+```
+
+### Isolated Test Data
+
+```typescript
+// Good: Each test creates its own data
+it('test 1', async () => {
+  const user = await createUser(db);
+  // ...
+});
+
+it('test 2', async () => {
+  const user = await createUser(db);
+  // ...
+});
+
+// Bad: Shared data between tests
+const sharedUser = await createUser(db);
+```
+
+---
+
+## Test Data for Different Scenarios
+
+```typescript
+// factories/index.ts
+export const testData = {
+  // Valid data
+  validUser: () => createUserData(),
+  validPost: () => createPostData(),
+  
+  // Edge cases
+  userWithLongName: () => createUserData({ name: 'A'.repeat(100) }),
+  userWithSpecialChars: () => createUserData({ name: "O'Brien-Smith" }),
+  
+  // Invalid data
+  invalidEmail: () => createUserData({ email: 'not-an-email' }),
+  emptyName: () => createUserData({ name: '' }),
+};
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+- ❌ Hardcoded test data
+- ❌ Shared mutable state
+- ❌ No cleanup after tests
+- ❌ Sequential test dependencies
+- ❌ Production data in tests
+- ❌ Non-deterministic data in snapshots
+
+---
+
+## Security Checklist
+
+- [ ] Factory functions for all entities
+- [ ] Unique values generated
+- [ ] Database cleaned between tests
+- [ ] No production data used
+- [ ] Test data isolated
+- [ ] Scenario builders for complex setups
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [unit-testing.mdc](./unit-testing.mdc) - Unit tests
+  - [integration-testing.mdc](./integration-testing.mdc) - Integration tests
+  - [e2e-testing.mdc](./e2e-testing.mdc) - E2E tests

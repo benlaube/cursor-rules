@@ -1,0 +1,410 @@
+---
+description: Auto-applied rule for integrating modules into projects. Guides AI agents on copy-paste vs monorepo vs NPM package patterns, integration steps, and dependency management.
+version: 1.0.0
+created: 12-09-2025
+lastUpdated: 12-09-2025 06:49:53 EST
+alwaysApply: false
+globs: modules/**/*.{ts,js,tsx,jsx,md,json}
+type: Behavioral Rule - Module integration guidance
+applicability: When integrating a module into a project, copying module files, working with module source code, or setting up module dependencies
+dependencies: []
+relatedCommands: []
+relatedRules: [module-discovery-selection.mdc, module-documentation-requirements.mdc, module-dependencies.mdc]
+relatedStandards: [module-structure.md, project-planning/project-structure.md]
+---
+
+# Module Integration Patterns Rule
+
+## When This Rule Applies
+
+This rule **automatically applies** when:
+- Integrating a module into a project
+- Copying module files to project
+- Setting up module dependencies
+- Updating module integration
+- Working with module imports
+
+---
+
+## Core Principle
+
+**Modules can be integrated using different patterns based on project structure and needs.** The copy-paste pattern is recommended for most cases, but monorepo and NPM patterns are available for specific scenarios.
+
+**Source Standard:** `standards/module-structure.md` and `standards/project-planning/project-structure.md`
+
+---
+
+## Agent Responsibilities
+
+### 1. Integration Pattern Selection
+
+**Choose integration pattern based on project structure:**
+
+#### Pattern 1: Copy-Paste Pattern (Recommended)
+
+**When to use:**
+- Standalone projects
+- Module needs customization
+- Module is project-specific
+- Quick integration needed
+
+**Steps:**
+1. Copy entire module directory to project:
+   ```bash
+   cp -r modules/{module-name} lib/{module-name}
+   # or
+   cp -r modules/{module-name} src/lib/{module-name}
+   ```
+
+2. Update import paths in module files:
+   - Update relative imports to match project structure
+   - Update references to other modules (if any)
+   - Update database client imports (if applicable)
+
+3. Install dependencies:
+   ```bash
+   npm install {dependency1} {dependency2}
+   # Check module's package.json for dependencies
+   ```
+
+4. Update project imports:
+   ```typescript
+   // Update from:
+   import { something } from './modules/module-name';
+   
+   // To:
+   import { something } from '@/lib/module-name';
+   // or
+   import { something } from './lib/module-name';
+   ```
+
+5. Run module setup scripts (if available):
+   ```bash
+   npm run setup:{module-name}
+   # or
+   node lib/{module-name}/scripts/setup.js
+   ```
+
+#### Pattern 2: Monorepo Pattern
+
+**When to use:**
+- Multiple projects sharing same modules
+- Active module development
+- Workspace-based project structure
+- Need to update modules across projects
+
+**Steps:**
+1. Keep modules in `modules/` directory (don't copy)
+
+2. Configure workspace in root `package.json`:
+   ```json
+   {
+     "workspaces": [
+       "modules/*",
+       "apps/*"
+     ]
+   }
+   ```
+
+3. Reference module in project's `package.json`:
+   ```json
+   {
+     "dependencies": {
+       "@project/module-name": "workspace:*"
+     }
+   }
+   ```
+
+4. Import using workspace reference:
+   ```typescript
+   import { something } from '@project/module-name';
+   ```
+
+#### Pattern 3: NPM Package Pattern (Future)
+
+**When to use:**
+- Module is published as NPM package
+- Module is stable and versioned
+- Need version management
+
+**Steps:**
+1. Install via package manager:
+   ```bash
+   npm install @your-org/module-name
+   ```
+
+2. Import normally:
+   ```typescript
+   import { something } from '@your-org/module-name';
+   ```
+
+**Note:** Most modules in this repository are not yet published as NPM packages. Use copy-paste or monorepo patterns instead.
+
+### 2. Integration Process
+
+**Follow these steps for any integration pattern:**
+
+#### Step 1: Check Module Documentation
+
+1. **Read Module README.md:**
+   - Understand module purpose and features
+   - Review dependencies list
+   - Check installation instructions
+   - Review usage examples
+
+2. **Check for INTEGRATION_GUIDE.md:**
+   - Follow step-by-step integration guide
+   - Review configuration requirements
+   - Check troubleshooting section
+
+3. **Review Module Structure:**
+   - Understand module file organization
+   - Identify required files
+   - Note optional files
+
+#### Step 2: Verify Prerequisites
+
+1. **Check Dependencies:**
+   - List all dependencies from module's `package.json`
+   - Verify dependencies are compatible with project
+   - Check for version conflicts
+
+2. **Check Environment:**
+   - Verify required environment variables (check `.env.example`)
+   - Check database requirements (if applicable)
+   - Verify framework compatibility
+
+3. **Check Database Schema:**
+   - If module requires database changes, review migrations
+   - Check migration files in `modules/{module-name}/migrations/`
+   - Plan migration application
+
+#### Step 3: Copy/Install Module Files
+
+1. **Copy Module Files (Copy-Paste Pattern):**
+   ```bash
+   # Copy entire module
+   cp -r modules/{module-name} lib/{module-name}
+   
+   # Or copy specific files if module structure allows
+   cp modules/{module-name}/index.ts lib/{module-name}/
+   cp -r modules/{module-name}/src lib/{module-name}/
+   ```
+
+2. **Update Import Paths:**
+   - Search for relative imports in module files
+   - Update to match project structure
+   - Update references to other modules
+
+3. **Install Dependencies:**
+   ```bash
+   # Install all dependencies from module's package.json
+   npm install {dep1} {dep2} {dep3}
+   ```
+
+#### Step 4: Configure Module
+
+1. **Environment Variables:**
+   - Copy `.env.example` from module (if exists)
+   - Add required variables to project's `.env`
+   - Set values appropriately
+
+2. **Configuration Files:**
+   - Copy configuration templates (if provided)
+   - Update configuration for project needs
+   - Verify configuration loading
+
+3. **Database Setup:**
+   - Apply migrations if module requires database changes
+   - Run seed scripts if provided
+   - Verify database schema
+
+#### Step 5: Update Project Code
+
+1. **Update Imports:**
+   - Replace old implementations with module imports
+   - Update import paths to match integration pattern
+   - Remove duplicate code
+
+2. **Update Usage:**
+   - Follow module's usage examples
+   - Update code to use module API
+   - Remove old implementation code
+
+3. **Test Integration:**
+   - Run module tests (if available)
+   - Test module functionality in project
+   - Verify no breaking changes
+
+#### Step 6: Verify Integration
+
+1. **Check for Errors:**
+   - Run build/compile
+   - Check for import errors
+   - Verify type checking passes
+
+2. **Test Functionality:**
+   - Test module features
+   - Verify integration works
+   - Check for runtime errors
+
+3. **Update Documentation:**
+   - Document module integration in project
+   - Update project README if needed
+   - Note any customizations made
+
+### 3. Common Integration Issues
+
+#### Issue 1: Import Path Errors
+
+**Problem:** Module imports don't resolve after copying
+
+**Solution:**
+- Update relative imports in module files
+- Check TypeScript path mappings in `tsconfig.json`
+- Verify module location matches import paths
+
+#### Issue 2: Missing Dependencies
+
+**Problem:** Module fails due to missing dependencies
+
+**Solution:**
+- Check module's `package.json` for all dependencies
+- Install peer dependencies explicitly
+- Verify dependency versions are compatible
+
+#### Issue 3: Database Migration Conflicts
+
+**Problem:** Module migrations conflict with existing schema
+
+**Solution:**
+- Review module migrations before applying
+- Manually merge conflicting migrations
+- Test migrations in development first
+
+#### Issue 4: Configuration Not Loading
+
+**Problem:** Module configuration not found
+
+**Solution:**
+- Verify configuration file location
+- Check environment variable names
+- Review module's configuration loading logic
+
+### 4. Integration Examples
+
+#### Example 1: Copy-Paste Integration (Logger Module)
+
+```bash
+# Step 1: Copy module
+cp -r modules/logger-module lib/logger-module
+
+# Step 2: Install dependencies
+npm install pino zod uuid
+npm install -D pino-pretty  # Optional for development
+
+# Step 3: Update imports in project
+# From: import { setupLogger } from './modules/logger-module';
+# To: import { setupLogger } from '@/lib/logger-module';
+
+# Step 4: Configure environment
+# Add to .env:
+# LOG_LEVEL=info
+# ENABLE_FILE_LOGGING=true
+
+# Step 5: Use in project
+import { setupLogger } from '@/lib/logger-module';
+const logger = setupLogger('my-app', { env: 'development' });
+```
+
+#### Example 2: Monorepo Integration
+
+```json
+// root/package.json
+{
+  "workspaces": [
+    "modules/*",
+    "apps/*"
+  ]
+}
+
+// apps/my-app/package.json
+{
+  "dependencies": {
+    "@project/logger-module": "workspace:*"
+  }
+}
+```
+
+```typescript
+// In app code
+import { setupLogger } from '@project/logger-module';
+```
+
+---
+
+## Integration with Other Rules
+
+This rule works with:
+
+### `module-discovery-selection.mdc`
+- After selecting a module, use this rule to integrate it
+
+### `module-documentation-requirements.mdc`
+- Verify module has integration guide before starting
+
+### `module-dependencies.mdc`
+- Handle module dependencies during integration
+
+---
+
+## Related Files
+
+- **Standards:**
+  - [module-structure.md](../../standards/module-structure.md) - Module structure requirements
+  - [project-planning/project-structure.md](../../standards/project-planning/project-structure.md) - Project structure standards
+- **Rules:**
+  - [module-discovery-selection.mdc](./module-discovery-selection.mdc) - Module selection
+  - [module-documentation-requirements.mdc](./module-documentation-requirements.mdc) - Documentation verification
+  - [module-dependencies.mdc](./module-dependencies.mdc) - Dependency management
+- **Modules:**
+  - `modules/*/README.md` - Module documentation
+  - `modules/*/INTEGRATION_GUIDE.md` - Integration guides
+  - `modules/*/package.json` - Dependencies list
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically when integrating modules into projects.**
+
+**Agents should:**
+1. **Select integration pattern** based on project structure (copy-paste recommended)
+2. **Follow integration process** step-by-step
+3. **Check module documentation** before starting
+4. **Verify prerequisites** (dependencies, environment, database)
+5. **Update import paths** after copying files
+6. **Test integration** thoroughly before completing
+7. **Handle common issues** using provided solutions
+
+**Integration checklist:**
+- [ ] Read module README.md and INTEGRATION_GUIDE.md
+- [ ] Selected appropriate integration pattern
+- [ ] Verified dependencies are compatible
+- [ ] Copied/installed module files
+- [ ] Updated import paths
+- [ ] Installed all dependencies
+- [ ] Configured environment variables
+- [ ] Applied database migrations (if needed)
+- [ ] Updated project code to use module
+- [ ] Tested integration
+- [ ] Verified no errors
+
+**Pattern selection:**
+- [ ] Copy-paste: Standalone project, needs customization
+- [ ] Monorepo: Multiple projects, shared modules
+- [ ] NPM: Published package, version management
+
+---
+
+*This rule ensures modules are integrated correctly using appropriate patterns, reducing integration issues and ensuring consistency.*
