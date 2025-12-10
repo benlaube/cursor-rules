@@ -1,0 +1,5 @@
+# Ignore all contents of this directory
+# The folder itself is tracked, but project-specific rules go here
+*
+!.gitignore
+!.gitkeep

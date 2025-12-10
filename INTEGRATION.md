@@ -1,9 +1,20 @@
 # Cursor Rules Submodule Integration Guide
 
-> **Version:** 1.0.0  
-> **Last Updated:** 2025-01-27
+## Metadata
 
-Complete guide for integrating the cursor-rules repository as a git submodule in your project.
+- **Version:** 1.1.0
+- **Last Updated:** 12/10/2025
+- **Author:** Ben Laube
+- **Description:** Complete guide for integrating the cursor-rules repository as a git submodule directly into your project's `.cursor/` directory. This guide covers installation, updating, version pinning, troubleshooting, CI/CD integration, and best practices for managing shared Cursor IDE rules and commands across multiple projects while allowing project-specific customizations.
+
+---
+
+## Related Resources
+
+- **Submodule Repository:** https://github.com/benlaube/cursor-rules
+- **Main Repository:** https://github.com/benlaube/cursor-workflow-rules
+- **README.md** - Overview and quick start
+- **Git Submodule Docs:** https://git-scm.com/book/en/v2/Git-Tools-Submodules
 
 ---
 
@@ -11,10 +22,13 @@ Complete guide for integrating the cursor-rules repository as a git submodule in
 
 1. [Quick Start](#1-quick-start)
 2. [Full Integration Process](#2-full-integration-process)
-3. [Updating the Submodule](#3-updating-the-submodule)
-4. [Version Pinning](#4-version-pinning)
-5. [Troubleshooting](#5-troubleshooting)
-6. [CI/CD Integration](#6-cicd-integration)
+3. [Project-Specific Content](#3-project-specific-content)
+4. [Updating the Submodule](#4-updating-the-submodule)
+5. [Version Pinning](#5-version-pinning)
+6. [Troubleshooting](#6-troubleshooting)
+7. [CI/CD Integration](#7-cicd-integration)
+8. [Daily Workflow](#8-daily-workflow)
+9. [Best Practices](#9-best-practices)
 
 ---
 
@@ -23,7 +37,7 @@ Complete guide for integrating the cursor-rules repository as a git submodule in
 ### Add to New Project
 
 ```bash
-# In your project root
+# In your project root - one simple command!
 git submodule add https://github.com/benlaube/cursor-rules.git .cursor
 
 # Verify installation
@@ -31,10 +45,12 @@ ls .cursor/rules/
 ls .cursor/commands/
 ```
 
+**That's it!** The `.cursor/` directory is now a git submodule containing all shared rules and commands. Cursor IDE will automatically recognize them.
+
 ### Clone Existing Project
 
 ```bash
-# Clone with submodules
+# Clone with submodules (recommended)
 git clone --recurse-submodules <your-project-repo-url>
 
 # Or clone then initialize
@@ -55,8 +71,10 @@ git submodule add https://github.com/benlaube/cursor-rules.git .cursor
 ```
 
 This creates:
-- `.cursor/` directory with all rules and commands
+- `.cursor/` directory as a git submodule (contains `rules/` and `commands/`)
 - `.gitmodules` file with submodule configuration
+
+**Note:** If `.cursor/` already exists with content, git will handle it. The submodule will contain `rules/` and `commands/`, and you can add project-specific files to `.cursor/` that are tracked by your parent repository.
 
 ### Step 2: Verify Installation
 
@@ -97,13 +115,72 @@ rules and commands for consistent AI agent behavior.
 ### Step 4: Test in Cursor IDE
 
 1. Open project in Cursor IDE
-2. Rules should be automatically applied
+2. Rules should be automatically applied (no restart needed)
 3. Commands should be available in command palette
 4. Test a command: `Cmd+Shift+P` → type "pre-flight-check"
 
 ---
 
-## 3. Updating the Submodule
+## 3. Project-Specific Content
+
+### Using `_project_specific/` Folders
+
+The cursor-rules repository includes `_project_specific/` folders in both `rules/` and `commands/` directories. These folders are tracked by git, but their contents are ignored, allowing you to add project-specific rules and commands.
+
+**Structure:**
+```
+.cursor/
+├── rules/
+│   ├── _project_specific/    # Place project-specific rules here
+│   │   └── (contents ignored by git)
+│   └── [shared rules...]
+└── commands/
+    ├── _project_specific/    # Place project-specific commands here
+    │   └── (contents ignored by git)
+    └── [shared commands...]
+```
+
+**Usage:**
+
+1. **Add project-specific rule:**
+   ```bash
+   # Create your custom rule
+   vim .cursor/rules/_project_specific/my-custom-rule.mdc
+   ```
+
+2. **Add project-specific command:**
+   ```bash
+   # Create your custom command
+   vim .cursor/commands/_project_specific/my-custom-command.md
+   ```
+
+3. **These files are ignored by the submodule:**
+   - They won't be committed to the cursor-rules repository
+   - They stay in your project's parent repository
+   - They're available to Cursor IDE just like shared rules/commands
+
+**Benefits:**
+- ✅ Organized location for project-specific content
+- ✅ Folder structure visible (underscore prefix shows at top)
+- ✅ Clear separation from shared rules/commands
+- ✅ No git conflicts with submodule updates
+
+### Other Project-Specific Files
+
+You can also add other files directly to `.cursor/` that are tracked by your parent repository:
+
+```bash
+# Example: Project-specific configuration
+echo '{"projectName": "my-project"}' > .cursor/project-config.json
+
+# This file is tracked by parent repo, not submodule
+git add .cursor/project-config.json
+git commit -m "chore: add project-specific cursor config"
+```
+
+---
+
+## 4. Updating the Submodule
 
 ### Update to Latest Version
 
@@ -144,7 +221,7 @@ git commit -m "chore: update all submodules to latest versions"
 
 ---
 
-## 4. Version Pinning
+## 5. Version Pinning
 
 ### Pin to Specific Version/Tag
 
@@ -201,7 +278,7 @@ git log --oneline --decorate | head -20
 
 ---
 
-## 5. Troubleshooting
+## 6. Troubleshooting
 
 ### Submodule Directory is Empty
 
@@ -229,7 +306,7 @@ git submodule update --init --recursive
    # Should show commit hash, not empty
    ```
 
-3. Restart Cursor IDE
+3. Restart Cursor IDE (if changes were made while IDE was open)
 
 4. Verify rule files have proper YAML frontmatter
 
@@ -261,7 +338,7 @@ git commit -m "chore(.cursor): switch submodule to main branch"
 
 ---
 
-## 6. CI/CD Integration
+## 7. CI/CD Integration
 
 ### GitHub Actions
 
@@ -303,7 +380,7 @@ git submodule update --init --recursive
 
 ---
 
-## Daily Workflow
+## 8. Daily Workflow
 
 ### Normal Development (No Submodule Changes)
 
@@ -354,7 +431,7 @@ If you need to modify rules in the submodule:
 
 ---
 
-## Best Practices
+## 9. Best Practices
 
 1. **Pin to Stable Versions in Production**
    - Use tags (e.g., `v1.0.0`) for production
@@ -376,15 +453,13 @@ If you need to modify rules in the submodule:
    - Always configure CI/CD to handle submodules
    - Test submodule initialization in CI
 
----
-
-## Related Resources
-
-- **Submodule Repository:** https://github.com/benlaube/cursor-rules
-- **Main Repository:** https://github.com/benlaube/cursor-workflow-rules
-- **README.md** - Overview and quick start
-- **Git Submodule Docs:** https://git-scm.com/book/en/v2/Git-Tools-Submodules
+6. **Project-Specific Content**
+   - Use `_project_specific/` folders for custom rules/commands
+   - Keep project-specific files organized and documented
+   - Don't commit project-specific content to cursor-rules repository
 
 ---
 
-**Last Updated:** 2025-01-27
+**Last Updated:** 12/10/2025  
+**Author:** Ben Laube  
+**Version:** 1.1.0
