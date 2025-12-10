@@ -9,31 +9,31 @@ This repository contains Cursor IDE rules and commands used across projects.
 
 ## Usage
 
-This repository is included as a git submodule in projects. **Important:** The submodule should be added to `cursor-rules/` (not `.cursor/`) to preserve project-specific `.cursor/` content.
+This repository is included as a git submodule in projects. **The submodule is added directly to `.cursor/`** - this is the simplest and most direct approach.
 
 ### Quick Start
 
 ```bash
-# Add submodule to cursor-rules/ directory
-git submodule add https://github.com/benlaube/cursor-rules.git cursor-rules
-
-# Run setup script to create symlinks
-./scripts/setup-cursor-rules.sh
+# Add submodule directly to .cursor/ directory
+git submodule add https://github.com/benlaube/cursor-rules.git .cursor
 ```
 
 This creates:
-- `cursor-rules/` - The submodule (contains rules/ and commands/)
-- `.cursor/rules` - Symlink to `cursor-rules/rules`
-- `.cursor/commands` - Symlink to `cursor-rules/commands`
+- `.cursor/` - The submodule (contains rules/ and commands/ at root)
+- `.cursor/rules/` - All Cursor rules (tracked by submodule)
+- `.cursor/commands/` - All Cursor commands (tracked by submodule)
 
-### Why cursor-rules/ instead of .cursor/?
+### Project-Specific Content
 
-Projects may have additional content in `.cursor/` beyond rules and commands:
-- Project-specific configurations
-- Custom rules
-- Other directories
+Projects can still add project-specific files to `.cursor/`:
+- These files are tracked by the **parent repository** (not the submodule)
+- They coexist with the submodule content
+- Example: `.cursor/project-config.json` (project-specific, in parent repo)
 
-Placing the submodule directly in `.cursor/` would overwrite this content. Using `cursor-rules/` with symlinks preserves project-specific content while providing shared rules and commands.
+**How it works:**
+- Files in `.cursor/rules/` and `.cursor/commands/` are tracked by the submodule
+- Other files in `.cursor/` are tracked by the parent repository
+- Git automatically handles this separation
 
 ## Integration
 
