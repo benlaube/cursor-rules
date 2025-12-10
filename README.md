@@ -37,7 +37,19 @@ Projects can still add project-specific files to `.cursor/`:
 
 ## Integration
 
-See the main repository's `STANDARDS_INTEGRATION_GUIDE.md` for complete integration instructions, or run the setup script after adding the submodule.
+### Quick Integration
+
+```bash
+# Add submodule
+git submodule add https://github.com/benlaube/cursor-rules.git .cursor
+
+# Verify installation (optional)
+.cursor/scripts/verify-integration.sh
+```
+
+### Complete Guide
+
+See `INTEGRATION.md` in this repository for complete integration instructions, or the main repository's `STANDARDS_INTEGRATION_GUIDE.md` for full workflow integration.
 
 ## Versioning
 
