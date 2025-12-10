@@ -43,13 +43,31 @@ Projects can still add project-specific files to `.cursor/`:
 # Add submodule
 git submodule add https://github.com/benlaube/cursor-rules.git .cursor
 
+# Set up file protection (recommended)
+.cursor/.scripts/setup-protection.sh
+
 # Verify installation (optional)
-.cursor/scripts/verify-integration.sh
+.cursor/.scripts/verify-integration.sh
 ```
 
 ### Complete Guide
 
-See `INTEGRATION.md` in this repository for complete integration instructions, or the main repository's `STANDARDS_INTEGRATION_GUIDE.md` for full workflow integration.
+See `INTEGRATION_SETUP.md` in this repository for complete integration instructions, or the main repository's `STANDARDS_INTEGRATION_GUIDE.md` for full workflow integration.
+
+## File Protection
+
+Files are protected by default to prevent accidental modifications:
+
+- **Read-only permissions** - Files are locked (read-only) by default
+- **Git hooks** - Require confirmation before committing to submodule
+- **Auto-locking** - Files automatically locked after updates
+
+**To unlock for editing:**
+```bash
+.cursor/.scripts/lock-rules.sh unlock
+```
+
+**See `INTEGRATION_SETUP.md` Section 10 for complete protection guide.**
 
 ## Versioning
 

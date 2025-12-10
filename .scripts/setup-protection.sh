@@ -23,9 +23,9 @@ if [ ! -f "${CURSOR_DIR}/.git" ] && [ ! -d "${CURSOR_DIR}/.git" ]; then
 fi
 
 # Step 2: Lock files immediately
-if [ -f "${CURSOR_DIR}/scripts/lock-rules.sh" ]; then
+if [ -f "${CURSOR_DIR}/.scripts/lock-rules.sh" ]; then
     echo "🔒 Locking files (read-only)..."
-    bash "${CURSOR_DIR}/scripts/lock-rules.sh" lock
+    bash "${CURSOR_DIR}/.scripts/lock-rules.sh" lock
     echo ""
 else
     echo "  ⚠️  lock-rules.sh not found"
@@ -104,7 +104,7 @@ echo "  ✓ Git hooks warn before committing to submodule"
 echo "  ✓ Auto-lock after submodule updates"
 echo ""
 echo "💡 To unlock files for editing:"
-echo "   .cursor/scripts/lock-rules.sh unlock"
+echo "   .cursor/.scripts/lock-rules.sh unlock"
 echo ""
 echo "💡 To make changes:"
 echo "   1. Edit in cursor-rules repository (not here)"

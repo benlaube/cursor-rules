@@ -112,7 +112,27 @@ rules and commands for consistent AI agent behavior.
 - See README.md for usage instructions"
 ```
 
-### Step 4: Test in Cursor IDE
+### Step 4: Set Up File Protection (Recommended)
+
+Protect shared rules and commands from accidental modifications:
+
+```bash
+# Set up file locking and git hooks
+.cursor/scripts/setup-protection.sh
+```
+
+This will:
+- Lock all rules and commands (read-only)
+- Install git hooks to warn before committing to submodule
+- Auto-lock files after submodule updates
+
+**Why?** These files are shared across projects. Protection reminds you to:
+- Make changes in the cursor-rules repository (for shared changes)
+- Use `_project_specific/` folders (for project-only changes)
+
+See [File Protection](#10-file-protection) section below for complete protection guide.
+
+### Step 5: Test in Cursor IDE
 
 1. Open project in Cursor IDE
 2. Rules should be automatically applied (no restart needed)
