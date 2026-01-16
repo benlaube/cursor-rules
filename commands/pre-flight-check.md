@@ -1,7 +1,8 @@
 ---
 description: Run pre-flight checks before starting any coding task. Validates environment, git status, dependencies, and baseline integrity.
-version: 1.0.0
-lastUpdated: 2025-12-02
+version: 1.0.1
+lastUpdated: 01-13-2026 01:22:00 EST
+lastupdatedby: Codex (GPT-5)
 globs:
 ---
 
@@ -9,17 +10,13 @@ globs:
 
 Use this command to validate your environment and repository state before starting any coding task. This is the **first command** you should run before making significant changes.
 
-**Source Checklist:** `standards/development-checklists/pre-flight-checklist.md` (comprehensive pre-flight checklist)
+**Source Checklist:** None (this command is the source of truth; `docs/INDEX.md` currently references a missing checklist path)
 
 ## Usage
 
 @agent: When starting a new task or before making significant changes, run this command first.
 
-**Parameters:**
-
-- `skip-tests`: `true` or `false` (default: `false`). Skip running tests (faster, but less thorough).
-
----
+**Automation Script:** `scripts/pre-flight-check.sh`
 
 ## Execution Steps
 
@@ -46,54 +43,53 @@ Use this command to validate your environment and repository state before starti
 ### 2. Environment Validation
 
 1. **Dependencies Check:**
-   - **Node.js:** Check if `node_modules` exists and is recent
-     - If missing or stale: Run `npm install` (or `yarn install` / `pnpm install` based on lockfile)
-   - **Python:** Check if `.venv` exists
-     - If missing: Create `.venv` and run `pip install -r requirements.txt`
+   - **Node.js (repo root):** Check `node_modules` in repo root.
+     - If missing: `npm install`
+   - **Node.js (apps/web):** Check `apps/web/node_modules`.
+     - If missing: `npm install --prefix apps/web`
+   - **Python:** Check for `venv/` or `.venv/` (repo uses `venv/` today).
+     - If missing: create and install `pip install -r requirements.txt`
    - ✅ "Dependencies are up to date"
 
 2. **Configuration Check:**
-   - Verify `.env` exists (or `.env.local` for Next.js)
+   - Verify **root** `.env` or `.env.local` exists (server-only secrets live here).
+   - Verify **Next.js** `apps/web/.env.local` exists.
    - If missing:
-     - Check for `.env.example`
-     - If exists, copy: `cp .env.example .env`
-     - Warn: "⚠️ Created `.env` from `.env.example`. Please fill in required secrets."
-   - Compare `.env` with `.env.example`:
-     - List any missing keys from `.env.example` that aren't in `.env`
-     - Warn about missing keys
-   - ✅ "Configuration file exists and has required keys"
+     - Copy `apps/web/.env.example` → `apps/web/.env.local`
+     - Warn: "⚠️ Created `.env.local` from `.env.example`. Fill in required secrets."
+   - Compare `apps/web/.env.local` vs `apps/web/.env.example` for missing keys.
+   - ✅ "Configuration files exist and have required keys"
 
 3. **Secrets Validation:**
-   - Check if secrets are loaded (verify `settings-manager` or env vars are accessible)
-   - For Supabase projects: Verify `SUPABASE_URL` and `SUPABASE_ANON_KEY` are set
+   - For Supabase projects:
+     - Root: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (server-side)
+     - apps/web: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - ✅ "Secrets are properly configured"
 
 ### 3. Baseline Integrity
 
-_Unless `skip-tests=true`_
-
 1. **Tests:**
-   - Run: `npm test` (or equivalent test command)
+   - Run: `npm run test` (root script proxies to `apps/web`)
    - If tests fail:
      - Display failing tests
      - **ABORT:** "❌ Tests are failing. Fix tests before proceeding."
    - If pass: ✅ "All tests pass"
 
 2. **Build:**
-   - Run: `npm run build` (or equivalent build command)
+   - Run: `npm run build` (root script proxies to `apps/web`)
    - If build fails:
      - Display build errors
      - **ABORT:** "❌ Build is failing. Fix build errors before proceeding."
    - If succeeds: ✅ "Project builds successfully"
 
 3. **Linter:**
-   - Run: `npm run lint` (or equivalent lint command)
+   - Run: `npm run lint` (root script proxies to `apps/web`)
    - If linter errors exist:
      - Display errors
      - Warn: "⚠️ Linter errors found. Consider fixing before adding new code."
-     - Option to auto-fix: `npm run lint -- --fix` (if available)
+     - Option to auto-fix: `npm run lint:fix`
    - If clean: ✅ "No linter errors"
-   - **Reference:** See `standards/process/linting.md` Section 6.1 for detailed pre-flight lint requirements
+   - **Reference:** See `docs/standards/` for linting standards
 
 ### 4. Task Understanding
 
@@ -145,9 +141,43 @@ Action required: Fix issues above before proceeding.
 
 This command will automatically:
 
-- Install missing dependencies
-- Create `.env` from `.env.example` if missing
-- Attempt to auto-fix linter errors (if `--fix` flag available)
+- Install missing dependencies (`npm install`, `npm install --prefix apps/web`)
+- Create `apps/web/.env.local` from `apps/web/.env.example` if missing
+- Attempt to auto-fix linter errors via `npm run lint:fix`
+
+---
+
+## Optional Automation Hooks (Recommended)
+
+If you want this checklist to be fully automated, use `scripts/pre-flight-check.sh` (added) or a wrapper that performs the steps below:
+
+1. **Install dependencies automatically**
+   - Root: `npm install`
+   - Web app: `npm install --prefix apps/web`
+
+2. **Auto-fix lint issues**
+   - `npm run lint:fix`
+   - (Pre-commit already uses `node scripts/pre-commit/lint-staged-fix.js` for staged files)
+
+3. **Standard commands (root)**
+   - `npm run lint`
+   - `npm run test`
+   - `npm run build`
+
+---
+
+## Script Usage
+
+```bash
+./scripts/pre-flight-check.sh
+```
+
+Optional flags:
+
+- `LINT_FIX=1` run lint with auto-fix
+- `SKIP_LINT=1` skip lint
+- `SKIP_TESTS=1` skip tests
+- `SKIP_BUILD=1` skip build
 
 ---
 

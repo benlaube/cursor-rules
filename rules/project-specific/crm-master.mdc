@@ -1,0 +1,436 @@
+---
+description: CRM Master project-specific rules for contact management, lead attribution, realtor handling, custom fields, and UI/UX requirements. This rule covers domain-specific patterns, data safety protocols, and component behavior standards unique to the CRM Master application.
+version: 1.0.1
+created: 01-06-2026
+lastUpdated: 01-08-2026 17:13:26 EST
+alwaysApply: true
+globs:
+type: Project-Specific Rule - CRM Master domain rules
+applicability: All development work on CRM Master project
+dependencies: []
+relatedCommands: []
+relatedRules: [[../database/schema-enforcement.mdc], [../react/react-components.mdc], [../tailwind/tailwind-config.mdc], [../workflow/task-workflow.mdc]]
+relatedStandards: [[database/schema.md], [project-structure.md]]
+---
+
+# CRM Master Project-Specific Rules
+
+## When This Rule Applies
+
+This rule **always applies** when working on the CRM Master project. It contains domain-specific rules for:
+- Contact management operations
+- Lead attribution handling
+- Realtor profile management
+- Custom fields (EAV pattern)
+- UI/UX component requirements
+- Emergency protocols
+- Priority ordering for conflicting tasks
+
+---
+
+## Project Context
+
+**CRM Master** is an AI-powered CRM system with:
+- Next.js 14 UI with TypeScript
+- Supabase PostgreSQL database (~97,000 contacts after full migration)
+- Claude AI integration with **48 tools** (47 custom + 1 built-in Anthropic web_search)
+- Real-time streaming chat interface
+- Normalized schema with 14 tables, 5 views, 5 functions
+
+**File Structure:**
+- UI components: `apps/web/components/`
+- API routes: `apps/web/app/api/`
+- Database types: `apps/web/lib/database.types.ts`
+- Utility functions: `apps/web/lib/utils.ts`
+- Validation logic: `apps/web/lib/validation.ts`
+
+---
+
+## Contact Management Rules
+
+### Core Principles
+
+1. **Never duplicate contacts** - Always check for existing first using `search_contacts` tool
+2. **Preserve source system IDs** - Always maintain `ghl_id`, `fub_id`, `airtable_id` for sync tracking
+3. **Update data quality score** - Recalculate `data_quality_score` when changing contact data
+4. **Log all changes** - Always log changes to `sync_log` table for audit trail
+
+### Contact Operations
+
+```typescript
+// Before creating/updating a contact:
+// 1. Search for existing contact
+const existing = await search_contacts({ email, phone });
+
+// 2. If found, update instead of create
+if (existing.length > 0) {
+  await update_contact(existing[0].uuid, newData);
+} else {
+  await create_contact(newData);
+}
+
+// 3. Preserve source system IDs
+const contact = {
+  ...newData,
+  ghl_id: existing?.ghl_id || newData.ghl_id,
+  fub_id: existing?.fub_id || newData.fub_id,
+  airtable_id: existing?.airtable_id || newData.airtable_id,
+};
+
+// 4. Log to sync_log
+await logSyncChange({
+  contact_uuid: contact.uuid,
+  action: 'create' | 'update',
+  source_system: 'MANUAL' | 'GHL' | 'FUB',
+  changes: diff,
+});
+```
+
+### Data Quality
+
+- Recalculate `data_quality_score` after any contact data modification
+- Score factors: completeness, email validity, phone validity, address completeness
+- Update score via `update_contact` or dedicated data quality service
+
+---
+
+## Lead Attribution Rules
+
+### Core Principles
+
+1. **Always preserve** `source` and `sub_source` fields
+2. **Track origin** - Never lose information about where leads came from
+3. **Never overwrite** attribution data without explicit user confirmation
+
+### Attribution Handling
+
+```typescript
+// When updating contact, preserve attribution:
+const update = {
+  ...newData,
+  // NEVER overwrite these without confirmation:
+  source: existing.source || newData.source,
+  sub_source: existing.sub_source || newData.sub_source,
+};
+
+// If user explicitly wants to change attribution:
+if (userConfirmedAttributionChange) {
+  update.source = newSource;
+  update.sub_source = newSubSource;
+}
+```
+
+### Source System Tracking
+
+- `source_system`: 'GHL' | 'FUB' | 'AIRTABLE' | 'BOTH' | 'MANUAL'
+- Update `source_system` when syncing from multiple sources
+- Preserve original source even when merging contacts
+
+---
+
+## Realtor Handling Rules
+
+### Profile Creation
+
+**Only create `realtor_profiles` for:**
+- `contact_type = 'realtor'`
+- `contact_type = 'agent'`
+
+**Do NOT create for:**
+- `contact_type = 'lead'`
+- `contact_type = 'client'`
+- `contact_type = 'vendor'`
+
+### License Validation
+
+```typescript
+// Before creating realtor profile:
+if (contact.contact_type !== 'realtor' && contact.contact_type !== 'agent') {
+  throw new Error('Realtor profiles only for realtor/agent contact types');
+}
+
+// Validate license number format
+if (licenseNumber && !isValidLicenseNumber(licenseNumber)) {
+  throw new Error('Invalid license number format');
+}
+
+// Link to company if brokerage exists
+if (brokerageId) {
+  await linkContactToCompany(contact.uuid, brokerageId, {
+    is_current: true,
+    relationship_type: 'brokerage',
+  });
+}
+```
+
+### Required Fields
+
+- `license_number`: Validated format
+- `license_state`: Two-letter state code
+- `license_status`: 'active' | 'inactive' | 'expired' | 'suspended'
+- `license_expiration_date`: Date tracking
+- `current_brokerage_id`: Link to `companies` table
+
+---
+
+## Custom Fields Rules
+
+### EAV Pattern
+
+Custom fields use Entity-Attribute-Value pattern:
+- `custom_field_definitions`: Field schema (name, type, label)
+- `custom_field_values`: Actual values per contact
+
+### Auto-Creation
+
+```typescript
+// When setting a custom field value:
+// 1. Check if definition exists
+let definition = await getFieldDefinition(fieldName);
+
+// 2. Auto-create if missing
+if (!definition) {
+  definition = await createFieldDefinition({
+    field_name: fieldName,
+    field_label: fieldLabel || fieldName,
+    data_type: inferDataType(value), // 'text' | 'number' | 'date' | 'boolean'
+  });
+}
+
+// 3. Store value in appropriate type column
+await setCustomFieldValue(contactUuid, definition.id, {
+  value_text: typeof value === 'string' ? value : null,
+  value_number: typeof value === 'number' ? value : null,
+  value_date: value instanceof Date ? value : null,
+  value_boolean: typeof value === 'boolean' ? value : null,
+  source_system: 'MANUAL' | 'GHL' | 'FUB',
+});
+```
+
+### Type Storage
+
+- **Text values** → `value_text`
+- **Numeric values** → `value_number`
+- **Date values** → `value_date`
+- **Boolean values** → `value_boolean`
+- **Always track** `source_system` for all custom field values
+
+---
+
+## UI/UX Requirements
+
+### Contact Detail Sidebar
+
+**Layout:**
+- Slides in from right (not centered modal)
+- Background: **solid white (#ffffff)** - use hard-coded styles if CSS variables cause transparency
+- Width: `md:w-96` (384px) on desktop, full width on mobile
+
+**Tab Structure:**
+- **Overview Tab:** Show ALL data (emails, phones, addresses, companies, metadata, tags, Linq sync status)
+- **Activity Tab:** Change history, notes, enrichment log
+- **Realtor Tab:** Only show if `realtorProfile` exists
+- **Relationships Tab:** Only show if `relationships.length > 0`
+- **Other tabs:** AI Assistant, Messages, Custom Fields, Insights, Conversations
+
+**Data Display:**
+- Show primary information prominently
+- Show all emails/phones/addresses in separate sections
+- Display metadata (created, updated, source system IDs)
+- Show Linq sync status with sync button
+
+### Component Behavior Standards
+
+**Clickable Items:**
+- All clickable items must have hover states
+- Use `hover:bg-gray-100` or `hover:bg-primary/10` for visual feedback
+
+**Links:**
+- External links: `target="_blank" rel="noopener noreferrer"`
+- Internal navigation: Use Next.js router
+
+**Loading States:**
+- Show spinner (`Loader2` component) during async operations
+- Disable buttons during loading
+
+**Empty States:**
+- Show helpful messages: "No contacts found", "No activity yet"
+- Include action buttons when appropriate
+
+**Form Validation:**
+- Validate before submission
+- Show inline error messages
+- Disable submit button until valid
+
+### Responsiveness
+
+**Breakpoints:**
+- **Mobile:** Full width or adjusted layouts
+- **Tablet (md:):** 2/3 width sidebars
+- **Desktop (lg:):** 1/2 width sidebars (384px for contact sidebar)
+
+**Sidebar Positioning:**
+- Contact panel: `right-0` if no company panel, `right-[700px]` if company panel open
+- AI chat panel: Positioned to left of contact panel
+- Company panel: `right-0` when open
+
+---
+
+## Emergency Protocols
+
+### If Something Breaks
+
+1. **Check git status:** `git status`
+2. **Review recent changes:** `git diff`
+3. **Check browser console** for errors
+4. **Review linting:** Use `read_lints` tool
+5. **Revert if needed:** `git checkout -- filename`
+
+### If Database Issue
+
+1. **Check Supabase logs** in dashboard
+2. **Review recent migrations** in `migrations/` directory
+3. **Verify schema** matches expectations
+4. **Check for foreign key violations**
+5. **Never drop tables** without explicit confirmation
+
+### Recovery Steps
+
+- Use auto-heal strategies (see `workflow/auto-heal.mdc`)
+- Check for port conflicts, missing dependencies
+- Verify environment variables are set
+- Review error messages carefully before retrying
+
+---
+
+## Priority Order
+
+When tasks conflict, prioritize in this order:
+
+1. **Data Safety** - Never lose user data
+2. **Security** - Protect credentials and sensitive info
+3. **User Request** - Do what user asked for
+4. **Performance** - Keep it fast
+5. **Code Quality** - Keep it clean
+6. **Documentation** - Keep it updated
+
+**Examples:**
+- Data migration vs. new feature → Data migration first (data safety)
+- Security patch vs. UI improvement → Security patch first (security)
+- User-requested fix vs. refactoring → User fix first (user request)
+
+---
+
+## AI Tool Usage
+
+### Tool Count
+
+**Current System:** 48 tools (47 custom + 1 built-in Anthropic web_search)
+
+**Tool Categories:**
+- Core Operations (7 tools)
+- Schema Management (3 tools)
+- Custom Fields (5 tools)
+- Realtor Tools (1 tool)
+- Bulk Operations (4 tools)
+- Relationship Management (3 tools)
+- Company Management (4 tools)
+- Conversation & Analysis (2 tools)
+- Data Enrichment & Validation (9 tools)
+- Database Tools (3 tools)
+- Messaging (7 tools)
+
+### Tool Selection
+
+- **Prefer standard tools** over `execute_custom_query`
+- **Always call `get_database_schema`** before writing custom SQL
+- **Use `search_contacts`** before creating/updating contacts
+- **Only use `execute_custom_query`** for complex multi-table joins
+
+---
+
+## Performance Guidelines
+
+### Database Queries
+
+- Use `Promise.all()` for parallel queries when possible
+- Add `.limit()` to prevent massive result sets
+- Order results: `updated_at DESC`, `is_primary DESC`
+- Use indexes (exist on `email`, `phone`, `name`, `stage`, etc.)
+
+### UI Performance
+
+- Lazy load heavy components
+- Paginate long lists (contacts, activity logs)
+- Limit initial data loads: **50 contacts max** in gallery
+- Use `React.memo()` for expensive components
+- Avoid unnecessary re-renders
+
+---
+
+## Testing Expectations
+
+### Before Saying "Done"
+
+- ✅ Test in browser if UI changes made
+- ✅ Check for console errors
+- ✅ Verify linting passes (no TypeScript errors)
+- ✅ Test edge cases (empty states, long text, etc.)
+- ✅ Test responsive design (mobile, tablet, desktop)
+
+### When Adding Tools
+
+- ✅ Validate all required parameters
+- ✅ Test with missing/invalid data
+- ✅ Verify error messages are helpful
+- ✅ Check that tool appears in API `GET /api/chat`
+- ✅ Update system prompt if needed
+
+---
+
+## Linting Enforcement
+
+- `apps/web` uses a custom ESLint rule at `apps/web/eslint/rules/require-function-docs.js` that blocks commits when top-level or exported functions and class methods lack JSDoc with a description and `@dependencies`/`@depends`.
+- The rule runs via lint-staged inside the Husky pre-commit hook; do not disable or modify without owner approval.
+- Lint output lists files being fixed via the lint-staged command in root `package.json`.
+
+---
+
+## Related Files
+
+- **Rules:**
+  - [../database/schema-enforcement.mdc](../database/schema-enforcement.mdc) - Database schema standards
+  - [../react/react-components.mdc](../react/react-components.mdc) - React component patterns
+  - [../tailwind/tailwind-config.mdc](../tailwind/tailwind-config.mdc) - Styling standards
+  - [../workflow/task-workflow.mdc](../workflow/task-workflow.mdc) - Development workflow
+- **Standards:**
+  - [database/schema.md](../../../docs/standards/database/schema.md) - Database conventions
+  - [project-structure.md](../../../docs/standards/project-structure.md) - File organization
+- **Documentation:**
+  - [AGENTS.md](../../../AGENTS.md) - Project context and memory
+  - [docs/ai-agents/reference/overview.md](../../../docs/ai-agents/reference/overview.md) - AI agent capabilities
+
+---
+
+## How to Use This Rule
+
+**This rule applies automatically to all development work on CRM Master.**
+
+**Agents should:**
+- Follow contact management rules when working with contacts
+- Preserve lead attribution data
+- Validate realtor profiles before creation
+- Use EAV pattern for custom fields
+- Follow UI/UX requirements for components
+- Prioritize tasks according to priority order
+- Use 48 AI tools when possible (not 22)
+- Reference `apps/web/` paths (not `ui/`)
+
+**Integration points:**
+- Referenced in task workflow
+- Used alongside database and React rules
+- Complements styling standards
+
+---
+
+*This rule was created on 2026-01-06 by migrating content from `.cursorrules` to the modern rules system.*

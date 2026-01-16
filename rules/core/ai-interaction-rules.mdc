@@ -1,15 +1,15 @@
 ---
 description: Defines behavior and standards for AI agents interacting with repositories. This rule establishes core directives for context awareness, code reuse, DRY principles, safety practices, and documentation creation workflow that all AI agents must follow. Agents must check standards/ before generating code, use existing project structure, never commit secrets, follow temporary document workflow before creating analysis/status/plan documents, and follow all database and documentation standards.
-version: 1.7.0
+version: 1.8.0
 created: 12-04-2025
-lastUpdated: 12-08-2025 10:00:00 EST
+lastUpdated: 01-06-2026 12:22:27 EST
 alwaysApply: true
 globs:
 type: Auto-Applied Behavioral Rule - Guides AI agent behavior and coding standards
 applicability: All AI agent interactions with repositories
 dependencies: []
 relatedCommands: [launch.md, create-start-scripts.md]
-relatedRules: [[../workflow/runtime-configuration.mdc], [../workflow/task-workflow.mdc], [../dry-principle.mdc], [../documentation/temporary-document-workflow.mdc], [../documentation/documentation-metadata.mdc], [../database/schema-enforcement.mdc], [../database/data-model-integrity.mdc], [../database/impact-analysis.mdc]]
+relatedRules: [[../workflow/runtime-configuration.mdc], [../workflow/task-workflow.mdc], [../dry-principle.mdc], [../documentation/temporary-document-workflow.mdc], [../documentation/documentation-metadata.mdc], [../database/schema-enforcement.mdc], [../database/data-model-integrity.mdc], [../database/impact-analysis.mdc], [../project-specific/crm-master.mdc]]
 relatedStandards: [[project-planning/documentation-management.md], [database/schema.md]]
 ---
 
@@ -123,6 +123,24 @@ This document defines the behavior and standards for AI agents (Cursor, Windsurf
 ## Self-Correction
 - **Analyze Errors:** If a command fails, read the error message. Do not blindly retry the same command.
 - **Clarify Ambiguity:** If a user request conflicts with a rule in `standards/`, explicitly ask: "The standard says X, but you asked for Y. Should I update the standard or make an exception?"
+
+## Priority Order
+
+When tasks conflict, prioritize in this order:
+
+1. **Data Safety** - Never lose user data
+2. **Security** - Protect credentials and sensitive info
+3. **User Request** - Do what user asked for
+4. **Performance** - Keep it fast
+5. **Code Quality** - Keep it clean
+6. **Documentation** - Keep it updated
+
+**Examples:**
+- Data migration vs. new feature → Data migration first (data safety)
+- Security patch vs. UI improvement → Security patch first (security)
+- User-requested fix vs. refactoring → User fix first (user request)
+
+**Note:** For project-specific priority orders, see project-specific rules (e.g., `.cursor/rules/project-specific/crm-master.mdc`).
 
 ---
 

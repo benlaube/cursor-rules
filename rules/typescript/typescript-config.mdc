@@ -4,7 +4,7 @@ version: 1.0.0
 created: 12-08-2025
 lastUpdated: 12-08-2025 10:00:00 EST
 alwaysApply: false
-globs: **/*.ts,**/*.tsx,**/tsconfig.json
+globs: **/*.ts, **/*.tsx, **/tsconfig.json
 type: Tech Stack Rule - TypeScript configuration
 applicability: TypeScript projects
 dependencies: []
