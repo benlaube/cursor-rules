@@ -10,7 +10,7 @@ globs:
 
 Use this command to validate your environment and repository state before starting any coding task. This is the **first command** you should run before making significant changes.
 
-**Source Checklist:** None (this command is the source of truth; `docs/INDEX.md` currently references a missing checklist path)
+**Source Checklist:** None (this command is the source of truth; the checklist reference in `docs/INDEX.md` is stale)
 
 ## Usage
 
@@ -41,6 +41,12 @@ Use this command to validate your environment and repository state before starti
    - If up to date: ✅ "Local branch is synced with origin/main"
 
 ### 2. Environment Validation
+
+1. **Git Hooks Check:**
+   - Verify `.husky/` directory exists
+   - Verify `.husky/pre-commit` and `.husky/commit-msg` exist
+   - Check `git config core.hooksPath` is set to `.husky`
+   - If missing, suggest: `npm run prepare`
 
 1. **Dependencies Check:**
    - **Node.js (repo root):** Check `node_modules` in repo root.
@@ -178,6 +184,7 @@ Optional flags:
 - `SKIP_LINT=1` skip lint
 - `SKIP_TESTS=1` skip tests
 - `SKIP_BUILD=1` skip build
+- `RUN_HUSKY=1` run `.husky/pre-commit` for a full pre-commit dry run
 
 ---
 

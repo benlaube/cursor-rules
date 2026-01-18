@@ -32,7 +32,7 @@ This rule **automatically applies** when:
 3. Environment is configured
 4. Baseline tests and build pass
 
-**Source Checklist:** `standards/process/checklists/pre_flight_checklist.md`
+**Source Checklist:** None (source of truth is `.cursor/commands/pre-flight-check.md`)
 
 ---
 
@@ -83,7 +83,8 @@ flowchart TD
      - Verify `.husky/` directory exists
      - Verify `.husky/pre-commit` and `.husky/commit-msg` exist
      - Check hooks are executable
-   - **If missing:** Auto-run `setup-git-hooks` command
+     - Check `git config core.hooksPath` is set to `.husky`
+   - **If missing:** Run `npm run prepare` (or `setup-git-hooks` command if available)
    - ✅ Git hooks configured
 
 2. **Dependencies Check:**
