@@ -3,3 +3,6 @@
 
 # Cursor plans (project-specific, not part of shared rules)
 plans/
+
+# MCP config (project-specific, may contain local paths/secrets)
+mcp.json
