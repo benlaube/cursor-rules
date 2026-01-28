@@ -1,6 +1,9 @@
 # macOS
 .DS_Store
 
+# Logs
+debug.log
+
 # Cursor plans (project-specific, not part of shared rules)
 plans/
 
