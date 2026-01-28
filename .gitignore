@@ -1,0 +1,5 @@
+# macOS
+.DS_Store
+
+# Cursor plans (project-specific, not part of shared rules)
+plans/
